@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Growth Health Score — Free AARRR Growth Audit",
+  title: "Growth Health Score — AARRR Growth Audit Tool",
   description:
-    "Answer 15 questions across the 5 AARRR stages. Get a 0–100 growth health score, identify your top bottlenecks, and receive ICE-prioritized experiments to fix them. Free startup growth diagnostic by GrowthHackers.",
+    "Answer 15 questions across the 5 AARRR stages. Get a 0–100 growth health score, identify your top bottlenecks, and receive ICE-prioritized experiments to fix them. Free, open-source startup growth diagnostic.",
   keywords: [
-    "free growth audit",
     "AARRR growth score",
     "startup growth diagnostic",
     "growth health check",
@@ -16,22 +15,22 @@ export const metadata: Metadata = {
     "ICE framework",
     "growth experiment prioritization",
     "SaaS growth metrics",
+    "open source growth tool",
   ],
-  authors: [{ name: "GrowthHackers", url: "https://growthackers.io" }],
+  authors: [{ url: "https://growthackers.io" }],
   openGraph: {
-    title: "Growth Health Score — Free AARRR Growth Audit",
+    title: "Growth Health Score — AARRR Growth Audit Tool",
     description:
-      "Free startup growth diagnostic. Score your growth engine across Acquisition, Activation, Retention, Revenue, and Referral — then get a prioritized experiment roadmap.",
+      "Open-source startup growth diagnostic. Score your growth engine across Acquisition, Activation, Retention, Revenue, and Referral — then get a prioritized experiment roadmap.",
     type: "website",
     url: "https://growth-score.growthackers.io",
-    siteName: "GrowthHackers",
+    siteName: "Growth Health Score",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Growth Health Score — Free AARRR Growth Audit",
+    title: "Growth Health Score — AARRR Growth Audit Tool",
     description:
       "Diagnose your growth engine in 3 minutes. Score each AARRR stage 0–100, find your bottlenecks, get experiments.",
-    creator: "@GrowthHackers",
   },
   robots: {
     index: true,

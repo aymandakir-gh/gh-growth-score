@@ -99,27 +99,30 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
           {/* Share */}
           <ShareCard result={result} />
 
-          {/* GrowthHackers CTA */}
-          <section className="rounded-2xl border border-brand-500/30 bg-gradient-to-br from-brand-950 to-slate-900 p-8 text-center">
-            <div className="text-3xl mb-3">🚀</div>
-            <h2 className="text-2xl font-bold text-white mb-2">
-              Want help implementing these experiments?
-            </h2>
-            <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto leading-relaxed">
-              GrowthHackers is a growth agency that turns AARRR diagnostics into
-              real, prioritized experiments — then runs them. We&apos;ve helped
-              B2B SaaS companies go from stalled to scaling.
+          {/* OSS footer note */}
+          <section className="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-6 text-center">
+            <p className="text-slate-400 text-sm leading-relaxed">
+              This tool is free and open-source —{" "}
+              <a
+                href="https://github.com/growthackers/gh-growth-score"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-400 hover:text-brand-300 transition-colors"
+              >
+                fork it on GitHub
+              </a>
+              .
             </p>
-            <a
-              href="https://growthackers.io?utm_source=growth-score&utm_medium=tool&utm_campaign=results-cta"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold transition-all duration-200 hover:scale-105"
-            >
-              Talk to a Growth Expert →
-            </a>
-            <p className="text-xs text-slate-600 mt-4">
-              Free 30-minute growth audit call. No commitment.
+            <p className="text-xs text-slate-600 mt-2">
+              Questions?{" "}
+              <a
+                href="https://growthackers.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-slate-500 transition-colors"
+              >
+                growthackers.io
+              </a>
             </p>
           </section>
         </div>

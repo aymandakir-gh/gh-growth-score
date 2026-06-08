@@ -52,7 +52,7 @@ export default function ShareCard({ result }: ShareCardProps) {
   }
 
   const tweetText = encodeURIComponent(
-    `I scored ${result.overallScore}/100 on the Growth Health Score by @GrowthHackers\n\nTop bottlenecks: ${result.bottlenecks
+    `I scored ${result.overallScore}/100 on the Growth Health Score\n\nTop bottlenecks: ${result.bottlenecks
       .map((b) => b.charAt(0).toUpperCase() + b.slice(1))
       .join(", ")}\n\nTake the free AARRR audit → `
   );

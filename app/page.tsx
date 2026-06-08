@@ -47,12 +47,12 @@ export default function HomePage() {
           </a>
 
           <a
-            href="https://growthackers.io?utm_source=growth-score&utm_medium=nav"
+            href="https://github.com/growthackers/gh-growth-score"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs font-semibold text-slate-400 hover:text-brand-400 transition-colors"
           >
-            by GrowthHackers →
+            Open source · MIT
           </a>
         </div>
       </header>
@@ -70,14 +70,15 @@ export default function HomePage() {
       <footer className="border-t border-slate-800/60 mt-auto">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
           <div className="flex items-center gap-2">
-            <span className="text-slate-600">Built by</span>
+            <span className="text-slate-600">Open source · MIT</span>
+            <span className="text-slate-700">·</span>
             <a
               href="https://growthackers.io"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-400 hover:text-brand-400 transition-colors font-medium"
+              className="text-slate-500 hover:text-slate-400 transition-colors"
             >
-              GrowthHackers
+              growthackers.io
             </a>
           </div>
 

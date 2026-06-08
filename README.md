@@ -1,10 +1,8 @@
 # Growth Health Score
 
-**Free AARRR growth audit for startups and SaaS founders.**
+**Free, open-source AARRR growth audit.**
 
-Answer 15 diagnostic questions across the 5 AARRR stages — Acquisition, Activation, Retention, Revenue, Referral — and get a 0–100 growth health score, a ranked bottleneck analysis, and three ICE-prioritized experiments to fix your biggest gaps.
-
-Built and open-sourced by [GrowthHackers](https://growthackers.io).
+Answer 15 diagnostic questions across the five AARRR stages — Acquisition, Activation, Retention, Revenue, Referral — and get a 0–100 growth health score, a ranked bottleneck analysis, and three ICE-prioritized experiments to fix your biggest gaps. Takes about 3 minutes; you see your score with no signup.
 
 ---
 
@@ -16,55 +14,42 @@ Built and open-sourced by [GrowthHackers](https://growthackers.io).
 
 Most founders know they have growth problems. Few know *which* problems to fix first.
 
-The Growth Health Score is a structured self-diagnostic built on the AARRR framework. It takes about 3 minutes to complete and outputs:
+Growth Health Score is a structured self-diagnostic built on the AARRR framework. It outputs:
 
-- **Stage scores (0–100)** for each of the five AARRR stages, weighted by typical SaaS leverage
-- **Overall weighted score (0–100)** reflecting the health of your full growth engine
+- **Stage scores (0–100)** for each of the five AARRR stages, weighted by typical leverage
+- **Overall weighted score (0–100)** reflecting the health of your full funnel
 - **Top 3 bottleneck stages** ranked by how much they're dragging down your score
 - **3 ICE-prioritized experiments** — Impact × Confidence ÷ Effort — targeted at your weakest stages
 - **Shareable result URL** — your score is base64-encoded in the query string, no backend required
 
-The full report is gated behind an email capture. The API stub (`POST /api/lead`) logs the lead server-side and returns `{ ok: true }` — wiring to HubSpot, Intercom, or Supabase is a one-file change.
-
----
-
-## Why we built it
-
-Growth agencies talk to a lot of founders. Almost universally, the conversation starts with "we need more leads" — when the real issue is a 12% activation rate, or churn eating every new dollar of MRR.
-
-A free, public diagnostic tool forces that honest conversation. If it also generates qualified pipeline for GrowthHackers, great. But it works equally well as a standalone open-source tool you fork and run yourself.
+The full report is gated behind an optional email step. The API stub (`POST /api/lead`) logs the lead server-side and returns `{ ok: true }` — wiring to any CRM is a one-file change.
 
 ---
 
 ## Features
 
 - 15 questions across 5 AARRR stages (3 per stage)
-- Weighted scoring model: Retention and Revenue weighted highest (25% each), Referral lowest (10%)
-- Per-stage raw score + weighted contribution displayed side-by-side
+- Weighted scoring: Retention and Revenue highest (25% each), Referral lowest (10%)
+- Per-stage raw score + weighted contribution side-by-side
 - Automatic bottleneck detection — top 3 weakest stages flagged
-- ICE experiment bank: 3 experiments per stage, best one selected per bottleneck
-- Email gate before full report reveal (stub API, no external dependency)
+- ICE experiment bank: 3 per stage, best one selected per bottleneck
+- Optional email gate before the full report (stub API, no external dependency)
 - URL-encoded shareable results (Base64 JSON, no database)
-- One-click copy summary for Slack/Twitter
-- Responsive dark UI — works on mobile and desktop
-- Pure TypeScript scoring engine with zero runtime dependencies
-- 30+ unit tests covering scoring math, bottleneck detection, ICE selection, and encode/decode
+- One-click copy summary
+- Responsive dark UI — mobile and desktop
+- Pure TypeScript scoring engine, zero runtime dependencies
+- 40+ unit tests covering scoring math, bottleneck detection, ICE selection, encode/decode
 
-**Keywords:** free growth audit · AARRR growth score · startup growth diagnostic · growth health check · SaaS growth metrics · ICE framework · growth experiment prioritization · acquisition activation retention revenue referral · growth hacking tool
+**Keywords:** free growth audit · AARRR growth score · startup growth diagnostic · growth health check · growth metrics · ICE framework · growth experiment prioritization · acquisition activation retention revenue referral
 
 ---
 
 ## Quick start
 
 ```bash
-# Clone
-git clone https://github.com/growthackers/gh-growth-score.git
+git clone https://github.com/aymandakir-gh/gh-growth-score.git
 cd gh-growth-score
-
-# Install
 npm install
-
-# Run dev server
 npm run dev
 ```
 
@@ -78,16 +63,7 @@ Open [http://localhost:3000](http://localhost:3000).
 npm test
 ```
 
-The test suite covers:
-
-- `computeStageScore` — zero, max, midpoint, partial answers
-- `computeOverallScore` — weight correctness for each stage
-- `findBottlenecks` — correct ranking, n parameter, tie handling
-- `computeICE` — formula correctness, relative comparisons
-- `selectTopExperiments` — stage matching, ICE ranking, n results
-- `scoreSubmission` — full pipeline integration tests
-- URL encode/decode — round-trip fidelity, invalid token handling
-- `getScoreLabel` — all four urgency brackets
+Covers scoring math, weighting, bottleneck ranking, the ICE formula, experiment selection, the full pipeline, and URL encode/decode round-trips.
 
 ---
 
@@ -106,56 +82,46 @@ Everything lives in `/lib/scoring.ts`:
 
 | Export | Purpose |
 |---|---|
-| `STAGE_CONFIGS` | Stage weights, labels, colors — change weights here |
-| `QUESTIONS` | All 15 questions with 5-option answer scale |
-| `EXPERIMENT_BANK` | 3 experiments per stage — add or swap freely |
-| `scoreSubmission()` | Full pipeline — pure function, no side effects |
+| `STAGE_CONFIGS` | Stage weights, labels, colors |
+| `QUESTIONS` | All 15 questions with a 5-option scale |
+| `EXPERIMENT_BANK` | 3 experiments per stage |
+| `scoreSubmission()` | Full pipeline — pure function |
 | `computeICE()` | Impact × Confidence ÷ Effort |
 | `findBottlenecks()` | N weakest stages |
 | `encodeResultForURL()` | Base64 encode answers for sharing |
 
 ---
 
-## Wire the email gate to a real CRM
+## Wire the email gate to a CRM
 
-Edit `app/api/lead/route.ts`. The stub already validates email + score. Replace the `console.log` with:
-
-- **HubSpot:** `fetch("https://api.hubapi.com/contacts/v1/contact/", { method: "POST", ... })`
-- **Supabase:** `supabase.from("leads").insert({ email, score, ... })`
-- **Intercom:** `client.contacts.create({ email, ... })`
-- **n8n / Make webhook:** `fetch(process.env.WEBHOOK_URL, { method: "POST", body: JSON.stringify(payload) })`
+Edit `app/api/lead/route.ts`. The stub already validates email + score — replace the `console.log` with your provider (HubSpot, Supabase, a webhook, etc.).
 
 ---
 
 ## Stack
 
-- [Next.js 14](https://nextjs.org) (App Router)
-- [TypeScript](https://www.typescriptlang.org)
-- [Tailwind CSS](https://tailwindcss.com)
-- [Vitest](https://vitest.dev) for testing
+- [Next.js](https://nextjs.org) (App Router) · [TypeScript](https://www.typescriptlang.org) · [Tailwind CSS](https://tailwindcss.com) · [Vitest](https://vitest.dev)
 - Zero external runtime dependencies
 
 ---
 
 ## Contributing
 
-Pull requests welcome. A few ground rules:
+PRs welcome:
 
 1. Keep `lib/scoring.ts` pure — no network calls, no side effects
-2. Add or update tests for any change to scoring logic
-3. New experiments: add to `EXPERIMENT_BANK`, not hardcoded in components
-4. UI changes: keep the dark theme, keep it responsive
+2. Add/update tests for any scoring change
+3. New experiments go in `EXPERIMENT_BANK`
+4. Keep the UI dark and responsive
 
 ---
 
 ## License
 
-MIT — use it, fork it, white-label it, sell it. Attribution appreciated but not required.
+MIT — use it, fork it, white-label it. Attribution appreciated, not required.
 
 ---
 
-## About GrowthHackers
+## Questions?
 
-[GrowthHackers](https://growthackers.io) is a growth agency specializing in B2B SaaS. We help founders go from stalled to scaling using the same AARRR framework behind this tool — with a full team to actually run the experiments.
-
-[Book a free growth audit call →](https://growthackers.io/audit)
+Open an issue, or reach out at [growthackers.io](https://growthackers.io).

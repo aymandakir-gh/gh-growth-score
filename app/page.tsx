@@ -1,24 +1,48 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ScoringResult, decodeResultFromURL, scoreSubmission } from "@/lib/scoring";
+import {
+  ScoringResult,
+  decodeResultFromURL,
+  scoreSubmission,
+} from "@/lib/scoring";
 import GrowthQuiz from "@/components/GrowthQuiz";
 import ResultsDashboard from "@/components/ResultsDashboard";
+import LanguageSelector from "@/components/LanguageSelector";
+import {
+  translations,
+  getLangDir,
+  isValidLang,
+  type LangCode,
+} from "@/lib/i18n";
 
 type AppPhase = "quiz" | "results";
+
+// Canonical GitHub repo URL (org: aymandakir-gh)
+const GITHUB_URL = "https://github.com/aymandakir-gh/gh-growth-score";
 
 export default function HomePage() {
   const [phase, setPhase] = useState<AppPhase>("quiz");
   const [result, setResult] = useState<ScoringResult | null>(null);
+  const [lang, setLang] = useState<LangCode>("en");
 
-  // Hydrate from URL share token on load
+  // On mount: hydrate language from URL param, then check for share token
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    // Language
+    const langParam = params.get("lang");
+    if (langParam && isValidLang(langParam)) {
+      setLang(langParam);
+      document.documentElement.setAttribute("dir", getLangDir(langParam));
+      document.documentElement.setAttribute("lang", langParam);
+    }
+
+    // Share token — decode and rehydrate quiz result
     const token = params.get("r");
     if (token) {
       const decoded = decodeResultFromURL(token);
       if (decoded) {
-        // Re-run the scoring engine with the decoded answers to get full result
         const rehydrated = scoreSubmission(decoded.answers);
         setResult(rehydrated);
         setPhase("results");
@@ -26,12 +50,26 @@ export default function HomePage() {
     }
   }, []);
 
+  function handleLangChange(newLang: LangCode) {
+    setLang(newLang);
+    // Persist selection in URL without page reload (no localStorage per policy)
+    const params = new URLSearchParams(window.location.search);
+    if (newLang === "en") {
+      params.delete("lang");
+    } else {
+      params.set("lang", newLang);
+    }
+    const qs = params.toString();
+    history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }
+
   function handleQuizComplete(scoringResult: ScoringResult) {
     setResult(scoringResult);
     setPhase("results");
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  const t = translations[lang];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -42,18 +80,25 @@ export default function HomePage() {
             href="/"
             className="flex items-center gap-2 text-white font-bold text-base hover:text-brand-400 transition-colors"
           >
-            <span className="text-xl">📊</span>
-            <span>Growth Health Score</span>
+            <span className="text-xl" aria-hidden="true">📊</span>
+            <span>{t.nav.title}</span>
           </a>
 
-          <a
-            href="https://github.com/growthackers/gh-growth-score"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-semibold text-slate-400 hover:text-brand-400 transition-colors"
-          >
-            Open source · MIT
-          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold text-slate-400 hover:text-brand-400 transition-colors hidden sm:block"
+            >
+              {t.nav.openSource}
+            </a>
+            <LanguageSelector
+              current={lang}
+              onChange={handleLangChange}
+              label={t.selectLanguage}
+            />
+          </div>
         </div>
       </header>
 
@@ -70,8 +115,8 @@ export default function HomePage() {
       <footer className="border-t border-slate-800/60 mt-auto">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
           <div className="flex items-center gap-2">
-            <span className="text-slate-600">Open source · MIT</span>
-            <span className="text-slate-700">·</span>
+            <span className="text-slate-600">{t.footer.openSource}</span>
+            <span className="text-slate-700" aria-hidden="true">·</span>
             <a
               href="https://growthackers.io"
               target="_blank"
@@ -84,12 +129,12 @@ export default function HomePage() {
 
           <div className="flex items-center gap-5">
             <a
-              href="https://github.com/growthackers/gh-growth-score"
+              href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-slate-300 transition-colors"
             >
-              GitHub
+              {t.footer.github}
             </a>
             <a
               href="https://growthackers.io/privacy"
@@ -97,9 +142,9 @@ export default function HomePage() {
               rel="noopener noreferrer"
               className="hover:text-slate-300 transition-colors"
             >
-              Privacy
+              {t.footer.privacy}
             </a>
-            <span className="text-slate-700">MIT License</span>
+            <span className="text-slate-700">{t.footer.license}</span>
           </div>
         </div>
       </footer>

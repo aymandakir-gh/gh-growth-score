@@ -52,6 +52,8 @@ export default function HomePage() {
 
   function handleLangChange(newLang: LangCode) {
     setLang(newLang);
+    // SSR / prerender guard — history and window are browser-only
+    if (typeof window === "undefined") return;
     // Persist selection in URL without page reload (no localStorage per policy)
     const params = new URLSearchParams(window.location.search);
     if (newLang === "en") {

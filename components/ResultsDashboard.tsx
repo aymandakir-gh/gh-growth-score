@@ -7,49 +7,50 @@ import StageScoreCard from "./StageScoreCard";
 import ExperimentCard from "./ExperimentCard";
 import ShareCard from "./ShareCard";
 import EmailGate from "./EmailGate";
+import { useI18n } from "@/lib/i18n-context";
 
 interface ResultsDashboardProps {
   result: ScoringResult;
 }
 
 function ScoreLegend() {
+  const { t } = useI18n();
   return (
     <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs text-slate-400 mt-2">
       <div className="flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-full bg-red-500 inline-block" />
-        <span>Critical (&lt;40)</span>
+        <span className="w-3 h-3 rounded-full bg-red-500 inline-block" aria-hidden="true" />
+        <span>{t("results.legend.critical")}</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-full bg-yellow-500 inline-block" />
-        <span>Needs work (40&ndash;69)</span>
+        <span className="w-3 h-3 rounded-full bg-yellow-500 inline-block" aria-hidden="true" />
+        <span>{t("results.legend.needsWork")}</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-full bg-green-500 inline-block" />
-        <span>Good (70&ndash;84)</span>
+        <span className="w-3 h-3 rounded-full bg-green-500 inline-block" aria-hidden="true" />
+        <span>{t("results.legend.good")}</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
-        <span>Excellent (85+)</span>
+        <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" aria-hidden="true" />
+        <span>{t("results.legend.excellent")}</span>
       </div>
     </div>
   );
 }
 
 export default function ResultsDashboard({ result }: ResultsDashboardProps) {
+  const { t } = useI18n();
   const [emailUnlocked, setEmailUnlocked] = useState(false);
 
   return (
     <div className="space-y-8 sm:space-y-10 animate-fade-in">
-      {/* Overall score hero */}
       <section className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/15 border border-brand-500/30 text-brand-400 text-xs font-semibold tracking-wide uppercase mb-2">
-          Growth Health Score
+          {t("results.badge")}
         </div>
         <ScoreGauge score={result.overallScore} />
         <ScoreLegend />
       </section>
 
-      {/* Email gate */}
       {!emailUnlocked ? (
         <EmailGate
           overallScore={result.overallScore}
@@ -57,11 +58,12 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
         />
       ) : (
         <div className="space-y-8 sm:space-y-10 animate-slide-up">
-          {/* Stage breakdown */}
           <section>
-            <h2 className="text-lg sm:text-xl font-bold text-white mb-1">Stage Breakdown</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-white mb-1">
+              {t("results.stageBreakdown")}
+            </h2>
             <p className="text-sm text-slate-400 mb-5">
-              Weighted contributions to your overall score. Red stages are your primary bottlenecks.
+              {t("results.stageBreakdown.desc")}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {result.stageResults
@@ -76,16 +78,20 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
             </div>
           </section>
 
-          {/* Top bottlenecks */}
-          <section className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 sm:p-5">
+          <section
+            className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 sm:p-5"
+            aria-label="Top bottlenecks"
+          >
             <div className="flex items-start gap-3">
-              <span className="text-xl sm:text-2xl flex-shrink-0" aria-hidden>&#9888;&#65039;</span>
+              <span className="text-xl sm:text-2xl flex-shrink-0" aria-hidden="true">⚠️</span>
               <div>
                 <h3 className="font-semibold text-white mb-1">
-                  Your Top {result.bottlenecks.length} Bottlenecks
+                  {t("results.bottlenecks.title", {
+                    count: result.bottlenecks.length,
+                  })}
                 </h3>
                 <p className="text-sm text-slate-400 mb-3">
-                  These stages are dragging down your overall score. Focus here first.
+                  {t("results.bottlenecks.desc")}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {result.bottlenecks.map((stage) => {
@@ -95,8 +101,12 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
                         key={stage}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-300 text-sm font-medium"
                       >
-                        {sr.emoji} {sr.label}
-                        <span className="text-red-400 font-bold">{sr.rawScore}/100</span>
+                        <span aria-hidden="true">{sr.emoji}</span>
+                        {/* Stage label comes from scoring.ts — always EN; i18n future task */}
+                        {sr.label}
+                        <span className="text-red-400 font-bold">
+                          {sr.rawScore}/100
+                        </span>
                       </span>
                     ) : null;
                   })}
@@ -105,13 +115,12 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
             </div>
           </section>
 
-          {/* ICE experiments */}
           <section>
             <h2 className="text-lg sm:text-xl font-bold text-white mb-1">
-              Your Top 3 Experiments
+              {t("results.experiments.title")}
             </h2>
             <p className="text-sm text-slate-400 mb-5">
-              ICE-prioritized (Impact &times; Confidence &divide; Effort). Higher score = run this first.
+              {t("results.experiments.desc")}
             </p>
             <div className="space-y-3 sm:space-y-4">
               {result.experiments.map((exp, idx) => (
@@ -120,25 +129,23 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
             </div>
           </section>
 
-          {/* Share */}
           <ShareCard result={result} />
 
-          {/* OSS footer */}
           <section className="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-5 sm:p-6 text-center">
             <p className="text-slate-400 text-sm leading-relaxed">
-              This tool is free and open-source &mdash;{" "}
+              {t("results.footer.oss")}{" "}
               <a
                 href="https://github.com/aymandakir-gh/gh-growth-score"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand-400 hover:text-brand-300 transition-colors"
               >
-                fork it on GitHub
+                {t("results.footer.fork")}
               </a>
               .
             </p>
             <p className="text-xs text-slate-600 mt-2">
-              Questions?{" "}
+              {t("results.footer.questions")}{" "}
               <a
                 href="https://growthackers.io"
                 target="_blank"

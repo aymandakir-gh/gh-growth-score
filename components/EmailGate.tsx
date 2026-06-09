@@ -7,6 +7,18 @@ interface EmailGateProps {
   onSuccess: (email: string) => void;
 }
 
+function scoreColor(score: number) {
+  if (score >= 70) return "text-green-400";
+  if (score >= 40) return "text-yellow-400";
+  return "text-red-400";
+}
+
+function scoreLabel(score: number) {
+  if (score >= 70) return "Strong foundation";
+  if (score >= 40) return "Room to grow";
+  return "Critical gaps found";
+}
+
 export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -42,20 +54,28 @@ export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-brand-500/30 bg-gradient-to-br from-brand-950/80 to-slate-900 p-8 text-center">
-      <div className="text-4xl mb-3">📊</div>
-      <h2 className="text-2xl font-bold text-white mb-2">
-        Your score is ready
-      </h2>
-      <p className="text-slate-400 mb-1">
-        You scored <span className="text-brand-400 font-bold text-xl">{overallScore}/100</span> overall.
-      </p>
-      <p className="text-slate-400 text-sm mb-6">
-        Enter your email to unlock the full breakdown — stage scores, top
-        bottlenecks, and 3 ICE-prioritized experiments to fix them.
-      </p>
+    <div className="rounded-2xl border border-brand-500/30 bg-gradient-to-br from-brand-950/80 to-slate-900 p-6 sm:p-8">
+      {/* Score preview */}
+      <div className="text-center mb-6">
+        <div className="text-4xl mb-3">📊</div>
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+          Your score is ready
+        </h2>
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          <span className={`text-3xl font-bold ${scoreColor(overallScore)}`}>
+            {overallScore}/100
+          </span>
+          <span className={`text-sm font-medium px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 ${scoreColor(overallScore)}`}>
+            {scoreLabel(overallScore)}
+          </span>
+        </div>
+        <p className="text-slate-400 text-sm mt-3 max-w-sm mx-auto">
+          Enter your email to unlock the full breakdown &mdash; stage scores, top
+          bottlenecks, and 3 ICE-prioritized experiments to fix them.
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3 text-left max-w-sm mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-3 max-w-sm mx-auto">
         <div>
           <label className="block text-xs font-medium text-slate-400 mb-1">
             First Name
@@ -65,6 +85,7 @@ export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             placeholder="Alex"
+            autoComplete="given-name"
             className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 transition-colors"
           />
         </div>
@@ -78,6 +99,7 @@ export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
             value={company}
             onChange={(e) => setCompany(e.target.value)}
             placeholder="Acme Inc."
+            autoComplete="organization"
             className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 transition-colors"
           />
         </div>
@@ -92,6 +114,7 @@ export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@company.com"
+            autoComplete="email"
             className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 transition-colors"
           />
         </div>
@@ -105,21 +128,27 @@ export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
         <button
           type="submit"
           disabled={loading || !email}
-          className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
         >
           {loading ? (
             <>
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Unlocking…
+              Unlocking&hellip;
             </>
           ) : (
             "Unlock My Full Report →"
           )}
         </button>
 
-        <p className="text-center text-xs text-slate-600 pt-1">
-          No spam. We respect your inbox.
-        </p>
+        {/* Privacy note */}
+        <div className="flex items-start gap-2 pt-1">
+          <svg className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            We respect your privacy. No spam, ever. Your email is only used to send you your results. Unsubscribe anytime.
+          </p>
+        </div>
       </form>
     </div>
   );

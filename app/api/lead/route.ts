@@ -63,9 +63,9 @@ export async function POST(req: NextRequest) {
   const leadsApiUrl = process.env.LEADS_API_URL;
 
   if (!leadsApiUrl) {
-    // Dev fallback: no backend configured — log and succeed silently
+    // Dev fallback: no backend configured — log score only (no PII)
     console.warn("[gh-growth-score] LEADS_API_URL not set — skipping lead storage (dev mode)");
-    console.log("[gh-growth-score] Lead (not stored):", { email, overallScore, company, firstName });
+    console.log("[gh-growth-score] Lead (not stored) — score:", overallScore);
     return NextResponse.json({ ok: true }, { status: 200 });
   }
 

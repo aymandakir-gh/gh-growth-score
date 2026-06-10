@@ -11,6 +11,19 @@ import {
 import { Locale, RTL_LOCALES, translations, LOCALE_LABELS } from "./i18n";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SUPPORTED_LOCALES = new Set(Object.keys(translations)) as Set<Locale>;
+
+/** Read ?lang= from the current URL; falls back to "en" if absent or unknown. */
+function getLocaleFromUrl(): Locale {
+  if (typeof window === "undefined") return "en";
+  const param = new URLSearchParams(window.location.search).get("lang");
+  return param && SUPPORTED_LOCALES.has(param as Locale) ? (param as Locale) : "en";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -33,7 +46,9 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+  // Initialise from ?lang= URL param so html[lang] is correct on first client
+  // render — suppressHydrationWarning on <html> handles the SSR "en" mismatch.
+  const [locale, setLocaleState] = useState<Locale>(getLocaleFromUrl);
 
   const dir: "ltr" | "rtl" = RTL_LOCALES.includes(locale) ? "rtl" : "ltr";
 
@@ -43,8 +58,22 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = locale;
   }, [locale, dir]);
 
+  // Re-sync locale on browser back/forward (popstate changes ?lang= in URL)
+  useEffect(() => {
+    const onPopState = () => {
+      const next = getLocaleFromUrl();
+      setLocaleState(next);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
+    // Persist to URL via ?lang= — no localStorage, per GH global defaults
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", newLocale);
+    history.replaceState(null, "", url.toString());
   }, []);
 
   const t = useCallback(

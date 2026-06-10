@@ -115,12 +115,19 @@ export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@company.com"
             autoComplete="email"
+            aria-invalid={!!error}
+            aria-describedby="email-error-msg"
             className="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 transition-colors"
           />
         </div>
 
         {error && (
-          <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+          <p
+            id="email-error-msg"
+            role="alert"
+            aria-live="polite"
+            className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"
+          >
             {error}
           </p>
         )}

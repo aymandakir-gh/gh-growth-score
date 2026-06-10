@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { ScoringResult, decodeResultFromURL, scoreSubmission } from "@/lib/scoring";
 import GrowthQuiz from "@/components/GrowthQuiz";
 import ResultsDashboard from "@/components/ResultsDashboard";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import LanguageSelector from "@/components/LanguageSelector";
 import { useI18n } from "@/lib/i18n-context";
 
 type AppPhase = "quiz" | "results";
@@ -48,7 +48,7 @@ export default function HomePage() {
           </a>
 
           <div className="flex items-center gap-3">
-            <LanguageSwitcher />
+            <LanguageSelector />
             <a
               href="https://github.com/aymandakir-gh/gh-growth-score"
               target="_blank"

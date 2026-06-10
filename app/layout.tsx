@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import I18nWrapper from "@/components/I18nWrapper";
+import { PostHogProvider } from "@/components/PostHogProvider";
 
 export const metadata: Metadata = {
   title: "Growth Health Score — AARRR Growth Audit Tool",
@@ -47,17 +48,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className="antialiased">
-        <I18nWrapper>
-          {/* Subtle gradient background */}
-          <div
-            className="fixed inset-0 pointer-events-none z-0"
-            style={{
-              background:
-                "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(92,104,245,0.12) 0%, transparent 100%)",
-            }}
-          />
-          <div className="relative z-10">{children}</div>
-        </I18nWrapper>
+        <PostHogProvider>
+          <I18nWrapper>
+            {/* Subtle gradient background */}
+            <div
+              className="fixed inset-0 pointer-events-none z-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(92,104,245,0.12) 0%, transparent 100%)",
+              }}
+            />
+            <div className="relative z-10">{children}</div>
+          </I18nWrapper>
+        </PostHogProvider>
       </body>
     </html>
   );

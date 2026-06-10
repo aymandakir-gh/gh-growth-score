@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { ScoringResult } from "@/lib/scoring";
 import ScoreGauge from "./ScoreGauge";
 import StageScoreCard from "./StageScoreCard";
@@ -39,7 +40,22 @@ function ScoreLegend() {
 
 export default function ResultsDashboard({ result }: ResultsDashboardProps) {
   const { t } = useI18n();
+  const posthog = usePostHog();
   const [emailUnlocked, setEmailUnlocked] = useState(false);
+
+  function handleEmailSuccess(email: string) {
+    setEmailUnlocked(true);
+
+    // score_completed — full report unlocked after email gate
+    posthog?.capture("score_completed", {
+      score: result.overallScore,
+      bottleneck_stages: result.bottlenecks,
+      experiment_count: result.experiments.length,
+    });
+
+    // Associate future events with this user
+    posthog?.identify(email, { email });
+  }
 
   return (
     <div className="space-y-8 sm:space-y-10 animate-fade-in">
@@ -54,7 +70,7 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
       {!emailUnlocked ? (
         <EmailGate
           overallScore={result.overallScore}
-          onSuccess={() => setEmailUnlocked(true)}
+          onSuccess={handleEmailSuccess}
         />
       ) : (
         <div className="space-y-8 sm:space-y-10 animate-slide-up">

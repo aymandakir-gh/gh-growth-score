@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import posthog from "posthog-js";
 import { ScoringResult, decodeResultFromURL, scoreSubmission } from "@/lib/scoring";
 import GrowthQuiz from "@/components/GrowthQuiz";
 import ResultsDashboard from "@/components/ResultsDashboard";
@@ -24,6 +25,13 @@ export default function HomePage() {
         const rehydrated = scoreSubmission(decoded.answers);
         setResult(rehydrated);
         setPhase("results");
+
+        // demo_used — user opened a shared result link
+        try {
+          posthog.capture("demo_used", { score: rehydrated.overallScore });
+        } catch {
+          // graceful degrade — PostHog may not be initialised yet on first paint
+        }
       }
     }
   }, []);

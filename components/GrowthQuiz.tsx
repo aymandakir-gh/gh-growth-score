@@ -151,7 +151,7 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
 
         {/* How it works */}
         <div className="max-w-xl mx-auto mb-8">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest text-center mb-4">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest text-center mb-4">
             {t("quiz.howItWorks")}
           </h2>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-0">
@@ -188,7 +188,7 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
                   <div className="text-sm font-semibold text-white">
                     {t(item.labelKey)}
                   </div>
-                  <div className="text-xs text-slate-500 leading-snug">
+                  <div className="text-xs text-slate-400 leading-snug">
                     {t(item.descKey)}
                   </div>
                 </div>
@@ -205,7 +205,7 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
           >
             {t("quiz.cta")}
           </button>
-          <p className="text-xs text-slate-600 mt-3">{t("quiz.cta.note")}</p>
+          <p className="text-xs text-slate-400 mt-3">{t("quiz.cta.note")}</p>
         </div>
       </div>
     );
@@ -230,7 +230,7 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
               <div className="text-sm font-bold text-white">
                 {t(`stage.${currentStageConfig.stage}`)}
               </div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-slate-400">
                 {t(`stage.${currentStageConfig.stage}.desc`)}
               </div>
             </div>
@@ -271,7 +271,7 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
       {(currentStageIdx > 0 || currentQuestionInStage > 0) && (
         <button
           onClick={handleBack}
-          className="text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1"
+          className="text-sm text-slate-400 hover:text-slate-300 transition-colors flex items-center gap-1"
           aria-label="Go to previous question"
         >
           {t("quiz.back")}

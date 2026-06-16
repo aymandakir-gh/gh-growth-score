@@ -28,7 +28,7 @@ export default function StageProgress({ currentStageIdx, completedStageIdxs }: S
                     ? "bg-brand-500 border-brand-500 text-white"
                     : isCurrent
                     ? "bg-slate-900 border-brand-400 text-brand-400 ring-2 ring-brand-400/30 scale-110"
-                    : "bg-slate-800 border-slate-600 text-slate-600"
+                    : "bg-slate-800 border-slate-600 text-slate-400"
                 }`}
               >
                 {isDone ? (
@@ -47,7 +47,7 @@ export default function StageProgress({ currentStageIdx, completedStageIdxs }: S
                     ? "text-brand-400"
                     : isCurrent
                     ? "text-white"
-                    : "text-slate-600"
+                    : "text-slate-400"
                 }`}
               >
                 {cfg.label}

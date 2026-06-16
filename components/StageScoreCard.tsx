@@ -39,7 +39,7 @@ export default function StageScoreCard({ result, animationDelay = 0 }: StageScor
           <span className="text-2xl">{result.emoji}</span>
           <div>
             <div className="font-semibold text-white text-sm">{result.label}</div>
-            <div className="text-xs text-slate-500">Weight: {Math.round(result.weight * 100)}%</div>
+            <div className="text-xs text-slate-400">Weight: {Math.round(result.weight * 100)}%</div>
           </div>
         </div>
 
@@ -47,7 +47,7 @@ export default function StageScoreCard({ result, animationDelay = 0 }: StageScor
           <div className={`text-2xl font-bold ${getScoreColor(result.rawScore)}`}>
             {result.rawScore}
           </div>
-          <div className="text-xs text-slate-500">/ 100</div>
+          <div className="text-xs text-slate-400">/ 100</div>
         </div>
       </div>
 

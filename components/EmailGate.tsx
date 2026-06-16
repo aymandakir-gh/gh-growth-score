@@ -108,7 +108,7 @@ export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
             className="block text-xs font-medium text-slate-400 mb-1"
           >
             Company{" "}
-            <span className="text-slate-600" aria-hidden="true">
+            <span className="text-slate-400" aria-hidden="true">
               (optional)
             </span>
             <span className="sr-only">, optional</span>
@@ -187,7 +187,7 @@ export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
         {/* Privacy note */}
         <div className="flex items-start gap-2 pt-1">
           <svg
-            className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0"
+            className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -200,7 +200,7 @@ export default function EmailGate({ overallScore, onSuccess }: EmailGateProps) {
               d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
             />
           </svg>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-400 leading-relaxed">
             We respect your privacy. No spam, ever. Your email is only used to
             send you your results. Unsubscribe anytime.
           </p>

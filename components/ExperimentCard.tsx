@@ -41,7 +41,7 @@ export default function ExperimentCard({ experiment, rank }: ExperimentCardProps
         {/* ICE badge */}
         <div className="flex-shrink-0 text-center">
           <div className="text-lg font-bold text-brand-400">{experiment.ice}</div>
-          <div className="text-xs text-slate-500 leading-none">ICE</div>
+          <div className="text-xs text-slate-400 leading-none">ICE</div>
         </div>
       </div>
 
@@ -54,7 +54,7 @@ export default function ExperimentCard({ experiment, rank }: ExperimentCardProps
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${stageColor}`}>
           {experiment.stage}
         </span>
-        <div className="flex items-center gap-3 text-xs text-slate-500">
+        <div className="flex items-center gap-3 text-xs text-slate-400">
           <span>
             Impact <strong className="text-slate-300">{experiment.impact}/10</strong>
           </span>

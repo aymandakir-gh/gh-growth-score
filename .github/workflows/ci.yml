@@ -13,8 +13,13 @@ concurrency:
 
 jobs:
   build-test:
-    name: Lint · Test · Build
+    name: Lint · Test · Build · E2E
     runs-on: ubuntu-latest
+    env:
+      # The app degrades gracefully without these; set empty so nothing depends
+      # on secrets. Override in repo settings to enable.
+      NEXT_PUBLIC_SENTRY_DSN: ""
+      NEXT_PUBLIC_POSTHOG_KEY: ""
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,13 +36,22 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
+      - name: Test (unit)
         run: npm test
 
       - name: Build
         run: npm run build
-        env:
-          # The app degrades gracefully without these; set as empty so the
-          # build never depends on secrets. Override in repo settings to enable.
-          NEXT_PUBLIC_SENTRY_DSN: ""
-          NEXT_PUBLIC_POSTHOG_KEY: ""
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E (Playwright + axe)
+        run: npm run e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

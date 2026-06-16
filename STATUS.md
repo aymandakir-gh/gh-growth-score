@@ -2,6 +2,32 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v1.8.0: quality gate — CI e2e + Lighthouse ✅
+
+**Released v1.8.0** — CI now runs the full gate and Lighthouse is re-verified on
+the v2 build. See `PRD.md` (Slice 7).
+
+### Verification (gate — all green)
+- `npm run lint` → no ESLint warnings/errors
+- `npm test` → **223/223** unit
+- `npm run e2e` → **33/33** Playwright → **256 tests total** (≥240 target met)
+- `npm run build` → compiles + type-checks
+- **Lighthouse (desktop, v2 build, committed)** → **Perf 100 · A11y 100 ·
+  Best-Practices 96 · SEO 100** (all ≥95)
+
+### What shipped
+- **CI** (`.github/workflows/ci.yml`) now runs **lint → test → build → install
+  Playwright chromium → e2e**, and uploads the Playwright report on failure. CI
+  matches the local gate exactly.
+- **Lighthouse re-captured** on the v2 production build; `docs/lighthouse/`
+  report + SUMMARY refreshed. All four categories ≥95.
+- **Coverage** — e2e spans the share loop, OG (v1 + v2 tokens), PDF, embed,
+  i18n (`?lang=` + AR RTL), industry switch, and axe on landing + AARRR + PLG +
+  embed + RTL surfaces.
+
+### Decisions
+- CI installs only the chromium browser (the single project) to keep runs fast.
+
 ## 2026-06-16 — v1.7.0: per-industry benchmark depth ✅
 
 **Released v1.7.0** — "you vs median" is now per-industry × per-dimension across

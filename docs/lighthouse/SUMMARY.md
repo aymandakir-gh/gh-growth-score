@@ -1,8 +1,9 @@
 # Lighthouse report
 
-Real scores for the production build (`next build` + `next start`), captured
-2026-06-16 with **Lighthouse 12.8.2**, `--preset=desktop`, headless Chrome.
-Full report: [`desktop-report.html`](./desktop-report.html).
+Real scores for the **v2 production build** (`next build` + `next start`),
+re-captured 2026-06-16 with **Lighthouse 12**, `--preset=desktop`, headless
+Chrome, on the landing page. Full report:
+[`desktop-report.html`](./desktop-report.html).
 
 | Category | Score |
 |---|---:|
@@ -15,11 +16,11 @@ Key performance metrics (landing page):
 
 | Metric | Value |
 |---|---|
-| First Contentful Paint | 0.3 s |
-| Largest Contentful Paint | 0.5 s |
+| First Contentful Paint | 0.2 s |
+| Largest Contentful Paint | 0.6 s |
 | Total Blocking Time | 0 ms |
 | Cumulative Layout Shift | 0 |
-| Speed Index | 0.8 s |
+| Speed Index | 0.6 s |
 
 All four categories clear the ≥90 bar. Accessibility 100 is corroborated by the
 axe e2e suite (`e2e/a11y.spec.ts`), which scans the landing and shared-results

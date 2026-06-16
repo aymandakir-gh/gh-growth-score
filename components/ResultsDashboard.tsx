@@ -8,6 +8,7 @@ import { getDimensionRecommendation } from "@/lib/recommendations";
 import ScoreGauge from "./ScoreGauge";
 import StageScoreCard from "./StageScoreCard";
 import ExperimentCard from "./ExperimentCard";
+import PlaybookSection from "./PlaybookSection";
 import ShareCard from "./ShareCard";
 import EmailGate from "./EmailGate";
 import { useI18n } from "@/lib/i18n-context";
@@ -247,6 +248,8 @@ export default function ResultsDashboard({ diagnostic, result, shared = false }:
               ))}
             </div>
           </section>
+
+          <PlaybookSection diagnostic={diagnostic} result={result} />
 
           <ShareCard diagnostic={diagnostic} result={result} />
 

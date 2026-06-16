@@ -82,6 +82,15 @@ const en: TranslationDict = {
   "results.footer.fork": "Fork it on GitHub",
   "results.footer.questions": "Questions?",
   "results.progress": "{answered}/{total}",
+
+  // ── Playbook ─────────────────────────────────────────────────────────────
+  "playbook.title": "Your action playbook",
+  "playbook.desc":
+    "Concrete tactics for your weakest stages — what to do, the steps, and what to measure. Export it and run it.",
+  "playbook.copy": "Copy playbook",
+  "playbook.copied": "Copied!",
+  "playbook.download": "Download .md",
+  "playbook.measure": "Measure",
 };
 
 const ar: TranslationDict = {
@@ -139,6 +148,15 @@ const ar: TranslationDict = {
   "results.footer.fork": "انشئ نسخة على GitHub",
   "results.footer.questions": "أسئلة؟",
   "results.progress": "{answered}/{total}",
+
+  // ── Playbook ─────────────────────────────────────────────────────────────
+  "playbook.title": "كتيّب الإجراءات",
+  "playbook.desc":
+    "تكتيكات ملموسة لأضعف مراحلك — ماذا تفعل، والخطوات، وما الذي تقيسه. صدّره ونفّذه.",
+  "playbook.copy": "نسخ الكتيّب",
+  "playbook.copied": "تم النسخ!",
+  "playbook.download": "تنزيل .md",
+  "playbook.measure": "قِس",
 };
 
 const it: TranslationDict = {
@@ -194,6 +212,15 @@ const it: TranslationDict = {
   "results.footer.fork": "Forkalo su GitHub",
   "results.footer.questions": "Domande?",
   "results.progress": "{answered}/{total}",
+
+  // ── Playbook ─────────────────────────────────────────────────────────────
+  "playbook.title": "Il tuo piano d'azione",
+  "playbook.desc":
+    "Tattiche concrete per le fasi più deboli — cosa fare, i passaggi e cosa misurare. Esportalo e mettilo in pratica.",
+  "playbook.copy": "Copia il piano",
+  "playbook.copied": "Copiato!",
+  "playbook.download": "Scarica .md",
+  "playbook.measure": "Misura",
 };
 
 const nl: TranslationDict = {
@@ -249,6 +276,15 @@ const nl: TranslationDict = {
   "results.footer.fork": "Fork het op GitHub",
   "results.footer.questions": "Vragen?",
   "results.progress": "{answered}/{total}",
+
+  // ── Playbook ─────────────────────────────────────────────────────────────
+  "playbook.title": "Jouw actieplan",
+  "playbook.desc":
+    "Concrete tactieken voor je zwakste fasen — wat te doen, de stappen en wat te meten. Exporteer en voer uit.",
+  "playbook.copy": "Plan kopiëren",
+  "playbook.copied": "Gekopieerd!",
+  "playbook.download": ".md downloaden",
+  "playbook.measure": "Meet",
 };
 
 const zh: TranslationDict = {
@@ -303,6 +339,15 @@ const zh: TranslationDict = {
   "results.footer.fork": "在 GitHub 上 Fork",
   "results.footer.questions": "有问题？",
   "results.progress": "{answered}/{total}",
+
+  // ── Playbook ─────────────────────────────────────────────────────────────
+  "playbook.title": "你的行动手册",
+  "playbook.desc":
+    "针对最薄弱环节的具体策略——做什么、步骤以及衡量指标。导出并执行。",
+  "playbook.copy": "复制手册",
+  "playbook.copied": "已复制！",
+  "playbook.download": "下载 .md",
+  "playbook.measure": "衡量",
 };
 
 const es: TranslationDict = {
@@ -358,6 +403,15 @@ const es: TranslationDict = {
   "results.footer.fork": "Forkéalo en GitHub",
   "results.footer.questions": "¿Preguntas?",
   "results.progress": "{answered}/{total}",
+
+  // ── Playbook ─────────────────────────────────────────────────────────────
+  "playbook.title": "Tu manual de acción",
+  "playbook.desc":
+    "Tácticas concretas para tus etapas más débiles: qué hacer, los pasos y qué medir. Expórtalo y ejecútalo.",
+  "playbook.copy": "Copiar manual",
+  "playbook.copied": "¡Copiado!",
+  "playbook.download": "Descargar .md",
+  "playbook.measure": "Medir",
 };
 
 const fr: TranslationDict = {
@@ -413,6 +467,15 @@ const fr: TranslationDict = {
   "results.footer.fork": "Forkez-le sur GitHub",
   "results.footer.questions": "Questions ?",
   "results.progress": "{answered}/{total}",
+
+  // ── Playbook ─────────────────────────────────────────────────────────────
+  "playbook.title": "Votre plan d'action",
+  "playbook.desc":
+    "Des tactiques concrètes pour vos étapes les plus faibles — quoi faire, les étapes et quoi mesurer. Exportez et exécutez.",
+  "playbook.copy": "Copier le plan",
+  "playbook.copied": "Copié !",
+  "playbook.download": "Télécharger .md",
+  "playbook.measure": "Mesurer",
 };
 
 const de: TranslationDict = {
@@ -468,6 +531,15 @@ const de: TranslationDict = {
   "results.footer.fork": "Auf GitHub forken",
   "results.footer.questions": "Fragen?",
   "results.progress": "{answered}/{total}",
+
+  // ── Playbook ─────────────────────────────────────────────────────────────
+  "playbook.title": "Ihr Aktionsplaybook",
+  "playbook.desc":
+    "Konkrete Taktiken für Ihre schwächsten Phasen — was zu tun ist, die Schritte und was zu messen ist. Exportieren und umsetzen.",
+  "playbook.copy": "Playbook kopieren",
+  "playbook.copied": "Kopiert!",
+  "playbook.download": ".md herunterladen",
+  "playbook.measure": "Messen",
 };
 
 const ptBr: TranslationDict = {
@@ -523,6 +595,15 @@ const ptBr: TranslationDict = {
   "results.footer.fork": "Faça um fork no GitHub",
   "results.footer.questions": "Dúvidas?",
   "results.progress": "{answered}/{total}",
+
+  // ── Playbook ─────────────────────────────────────────────────────────────
+  "playbook.title": "Seu manual de ação",
+  "playbook.desc":
+    "Táticas concretas para suas etapas mais fracas — o que fazer, os passos e o que medir. Exporte e execute.",
+  "playbook.copy": "Copiar manual",
+  "playbook.copied": "Copiado!",
+  "playbook.download": "Baixar .md",
+  "playbook.measure": "Medir",
 };
 
 export const translations: Record<Locale, TranslationDict> = {

@@ -2,6 +2,34 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v1.3.0: actionable playbook output ✅
+
+**Released v1.3.0** — weak stages now come with a concrete, exportable playbook.
+See `PRD.md` (Slice 2).
+
+### Verification (gate — all green)
+- `npm run build` → compiles + type-checks
+- `npm test` → **197/197** unit (+playbook integrity/export, +i18n parity ×9)
+- `npm run e2e` → **18/18** Playwright (+playbook render + .md export ×2)
+- `npm run screenshot` → regenerated
+
+### What shipped
+- **`lib/playbook.ts`** — per-dimension, **band-aware** tactics. Each tactic has
+  why · concrete steps · the metric to watch · effort · horizon. `getPlaybook`
+  tailors to the score band; `buildPlaybookMarkdown` renders an exportable,
+  **PII-free, timestamp-free** Markdown doc. Both diagnostics fully covered.
+- **`datasets/playbooks.md`** — documented content table + provenance (editorial,
+  synthesized from common growth practice, honestly labelled — not licensed).
+- **`components/PlaybookSection.tsx`** — "Your action playbook" results section
+  with **Copy** + **Download .md** export; folds into the PDF next slice.
+- **i18n** — 6 new `playbook.*` keys translated across all 9 locales (parity test
+  enforces completeness).
+
+### Decisions
+- Playbook is band-aware (foundational tactics for weak stages, advanced for
+  healthy ones) and never empty for a known dimension.
+- Export = clipboard + `.md` download now; PDF inclusion in Slice 3.
+
 ## 2026-06-16 — v1.2.0: shared engine + 2nd diagnostic (PLG) ✅
 
 **Released v1.2.0** — the AARRR tool is now a **multi-diagnostic platform** on a

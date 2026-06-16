@@ -2,6 +2,45 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v1.1.0: the growth loop ✅
+
+**Released v1.1.0** — the tool now markets itself, still **zero-backend &
+privacy-first**. All goal criteria met and verified. See `PLAN.md` (v1.1 plan).
+
+### Verification (final gate — all green)
+- `npm run build` → compiles + type-checks (routes: `/`, `/api/lead`, `/api/og`)
+- `npm test` → **155/155** unit tests
+- `npm run e2e` → **9/9** Playwright (share loop + OG + download + axe a11y)
+- `npm run screenshot` → regenerated `docs/screenshot.png`
+- Lighthouse (desktop): **Perf 100 · A11y 100 · Best-Practices 96 · SEO 100**
+
+### What shipped
+- **Compact, no-PII share codec** — `?r=1.<15 digits>` (version + one answer
+  digit per question). No email/name/timestamp; recomputes the exact result.
+  Legacy base64 tokens still decode. Edge-safe (dropped Buffer).
+- **Ungated shared views** — opening a `?r=` link skips the email gate and shows
+  the full breakdown + a "take your own audit" CTA. That's the loop.
+- **Dynamic OG/share image** — `app/api/og` (next/og, Edge) renders a branded
+  card (1200×630 social `og:image` + 1200×1500 `?v=report`). `page.tsx` is now a
+  server component with `generateMetadata` setting a score-aware title + image.
+- **Downloadable PNG report** — client-side fetch of the OG report image.
+- **Benchmark + recommendations** — `lib/benchmarks.ts` ("you vs median",
+  labelled synthesized placeholders in `datasets/benchmarks.md`) and
+  `lib/recommendations.ts` (per-stage advice by band), surfaced in the dashboard.
+- **a11y** — axe-clean (WCAG 2.0/2.1 A & AA) on landing + shared pages: raised
+  dim text to AA contrast, added `prefers-reduced-motion`, share-input label,
+  in-text link underlines.
+- **e2e infra** — Playwright suite + `@axe-core/playwright`; Lighthouse report
+  committed under `docs/lighthouse/`.
+- **Version** 1.0.0 → 1.1.0; tagged `v1.1.0`.
+
+### Decisions
+- **next/og can't be unit-tested** (needs Next's bundler), so all OG data logic
+  lives in a pure, unit-tested `lib/share-model.ts`; the route is a thin JSX
+  layer, and image validity is asserted by the Playwright e2e suite.
+- **Lighthouse uses the desktop preset** (desktop-first B2B tool); no
+  `VERCEL_TOKEN` present, so the deploy command is documented, not run.
+
 ## 2026-06-16 — v1.0.0 launch ✅
 
 **Released v1.0.0.** All launch-goal criteria met and verified. See `PLAN.md`

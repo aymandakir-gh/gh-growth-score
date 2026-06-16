@@ -25,9 +25,33 @@ Built by [GrowthHackers](https://growthackers.io) — free and open-source forev
 - **0–100 score per stage** — weighted by growth-model importance
 - **Bottleneck detection** — surfaces your 3 weakest stages
 - **ICE-prioritized experiments** — 3 actionable experiments ranked by Impact × Confidence ÷ Effort
-- **Shareable results** — encoded in the URL, no account needed
+- **Tailored recommendations + benchmark** — per-stage advice and "your score vs. industry median"
+- **Built-in growth loop** — shareable result link, auto-generated social preview image, downloadable report (see below)
 - **9 languages** — EN, AR (RTL), IT, NL, ZH, ES, FR, DE, PT-BR
-- **Works with zero backend** — the optional email gate degrades gracefully (see below)
+- **Zero backend, privacy-first** — no database, no PII leaves the browser; the optional email gate degrades gracefully
+
+---
+
+## The growth loop
+
+The tool markets itself: every result is shareable, and shared links preview the
+score on social — pulling new people in to take their own audit.
+
+![Auto-generated share card](./docs/share-card.png)
+
+- **Shareable result link.** Your full result is encoded in the URL — no account,
+  no database. The format is `?r=1.<15 digits>`: a version tag plus one answer
+  value (0–4) per question in fixed order (e.g. `?r=1.342013402230114`). That's
+  the **entire** payload — no email, name, or timestamp, so it carries **no PII**.
+  Opening the link recomputes the exact score and breakdown.
+- **Dynamic share image.** `app/api/og` renders the branded card above from the
+  token via `next/og`, so a pasted link previews the score on X/LinkedIn. It's a
+  stateless render of the URL — nothing stored.
+- **Ungated for recipients.** Opening a shared link shows the full breakdown
+  immediately (it's already public, no PII) with a CTA to take your own audit —
+  that's the loop.
+- **Downloadable report.** One click saves a branded PNG report (score, AARRR
+  breakdown vs. median, bottlenecks, top experiments).
 
 ---
 
@@ -85,6 +109,14 @@ ICE = round( Impact × Confidence ÷ Effort )      // all 1–10, higher = do fi
 
 You get the top 3 experiments, prioritized — a concrete roadmap, not just a number.
 
+**6. Compare + recommend.** Each stage is compared to an industry median
+(`lib/benchmarks.ts`) — "your score vs. median" — and each bottleneck gets a
+tailored recommendation by score band (`lib/recommendations.ts`).
+
+> The benchmark medians in [`datasets/benchmarks.md`](datasets/benchmarks.md) are
+> **honestly-labelled synthesized placeholders** (no licensed dataset is bundled
+> with this OSS repo). Swap them for real medians and the UI labelling updates.
+
 ---
 
 ## The email gate (decision: kept, env-configured, optional)
@@ -132,6 +164,7 @@ All optional. The app degrades gracefully when any are absent.
 | Variable | Purpose |
 |---|---|
 | `LEADS_API_URL` | gh-leads-core / CRM endpoint. Unset = lead capture skipped (app still works). |
+| `NEXT_PUBLIC_SITE_URL` | Absolute base for OG/share image URLs. Defaults to the prod host. |
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry error monitoring. Unset = disabled. |
 | `NEXT_PUBLIC_POSTHOG_KEY` | PostHog product analytics. Unset = disabled. |
 | `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host (defaults to EU cloud). |
@@ -142,27 +175,33 @@ cp .env.example .env.local   # then fill in only what you need
 
 ---
 
-## Tests & CI
+## Tests, CI & quality
 
 ```bash
-npm test     # 127 unit tests (Vitest)
+npm test     # 155 unit tests (Vitest)
 npm run lint # next lint (eslint-config-next)
 npm run build
+npm run e2e   # Playwright: share loop + OG route + axe a11y (needs a build)
 ```
 
 GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs
 **install → lint → test → build** on every push and PR to `main`.
 
-Coverage: the scoring engine (`lib/scoring.ts`), the `/api/lead` route
-(validation, rate limiting, dev fallback, upstream proxy), the rate limiter,
-i18n, and the `LanguageSelector` component.
+- **Unit (Vitest):** scoring engine, the result codec, benchmarks,
+  recommendations, share-model, the `/api/lead` route (validation, rate
+  limiting, fallback, proxy), the rate limiter, i18n, and `LanguageSelector`.
+- **E2E (Playwright):** the share-link round-trip, OG/report image routes, the
+  download, and **axe** accessibility scans (WCAG 2.0/2.1 A & AA, clean).
+- **Lighthouse** (desktop, committed under [`docs/lighthouse/`](docs/lighthouse/SUMMARY.md)):
+  **Performance 100 · Accessibility 100 · Best Practices 96 · SEO 100**.
 
 ---
 
 ## Stack
 
 - **Next.js 14** (App Router) · **TypeScript** · **Tailwind CSS**
-- **Vitest** unit tests · **Playwright** screenshot capture
+- **Vitest** unit tests · **Playwright** e2e + axe a11y + screenshot capture
+- **`next/og`** dynamic share images (Edge)
 - **Sentry + PostHog** observability (optional, graceful degrade)
 - No external UI libraries — pure Tailwind components
 
@@ -172,23 +211,28 @@ i18n, and the `LanguageSelector` component.
 
 ```
 app/
-  page.tsx              # Root — quiz or results, hydrates shared result from ?r=
-  layout.tsx            # Metadata, PostHog provider, global styles
+  page.tsx              # Server component — generateMetadata sets dynamic og:image for ?r=
+  layout.tsx            # Metadata + metadataBase, PostHog provider, global styles
   api/lead/route.ts     # Lead capture proxy (validation + rate limit + graceful fallback)
+  api/og/route.tsx      # Dynamic share-card image (next/og, Edge) — social + ?v=report
 components/
+  HomeClient.tsx        # Client shell — quiz/results, hydrates shared result from ?r=
   GrowthQuiz.tsx        # Quiz orchestrator (intro + question flow)
-  QuestionCard.tsx      # Single question with 5 options
-  ResultsDashboard.tsx  # Results view (score gauge, stage cards, experiments)
-  EmailGate.tsx         # Optional email capture with score preview
+  ResultsDashboard.tsx  # Results — gauge, stage cards, benchmark, recommendations, experiments
+  EmailGate.tsx         # Optional email capture (skipped for shared views)
   ScoreGauge.tsx        # SVG arc gauge · StageScoreCard.tsx · ExperimentCard.tsx
   LanguageSelector.tsx  # Accessible 9-language dropdown (WCAG 2.1 AA)
-  ShareCard.tsx         # Share URL + tweet button
+  ShareCard.tsx         # Share link + tweet + download report
 lib/
-  scoring.ts            # Questions, scoring, experiments — pure, single source of truth
+  scoring.ts            # Questions, scoring, experiments, share codec — pure single source of truth
+  benchmarks.ts         # Industry median table + compareToBenchmark
+  recommendations.ts    # Per-stage tailored advice by score band
+  share-model.ts        # Pure view-model for the OG card / report (unit-tested)
   rate-limit.ts         # In-memory sliding-window limiter for /api/lead
   i18n.ts               # 9-language flat-key dictionaries
-scripts/
-  screenshot.mjs        # Playwright capture → docs/screenshot.png
+datasets/benchmarks.md  # Documented benchmark medians (synthesized placeholders)
+e2e/                    # Playwright: growth-loop.spec.ts + a11y.spec.ts
+scripts/screenshot.mjs  # Playwright capture → docs/screenshot.png
 ```
 
 ---

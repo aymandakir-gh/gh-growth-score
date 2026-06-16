@@ -2,6 +2,21 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v1.9.0: README + demo refresh ✅
+
+**Released v1.9.0** — docs refreshed for the v2 platform ahead of the adversarial
+review + v2.0.0. See `PRD.md` (Slice 8).
+
+### What shipped
+- **README rewrite** — two diagnostics, playbook, PNG+PDF export, embed snippet,
+  `?lang=`/RTL, per-industry benchmarks, "add your own diagnostic", refreshed
+  test/Lighthouse numbers + structure.
+- **Multi-shot demo** — `scripts/screenshot.mjs` now captures landing
+  (`docs/screenshot.png`), a shared result (`docs/results.png`), and the
+  embeddable widget (`docs/embed.png`); all reproducible via `npm run screenshot`.
+- **`docs/EMBED.md`** linked from the README; `vercel.json` confirmed turnkey
+  (`{ "framework": "nextjs" }`); no secrets in tree (scanned).
+
 ## 2026-06-16 — v1.8.0: quality gate — CI e2e + Lighthouse ✅
 
 **Released v1.8.0** — CI now runs the full gate and Lighthouse is re-verified on

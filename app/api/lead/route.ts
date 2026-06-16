@@ -82,6 +82,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Reject non-object bodies (e.g. literal `null`, arrays, numbers) before
+  // destructuring — `JSON.parse("null")` succeeds but would throw on destructure.
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json(
+      { ok: false, error: "Request body must be a JSON object" },
+      { status: 400 }
+    );
+  }
+
   const { email, overallScore, company, firstName } = body as LeadPayload;
 
   // Validation

@@ -85,6 +85,15 @@ describe("multi-diagnostic share codec", () => {
     expect(decodeShareToken("1.999")).toBeNull(); // wrong length for AARRR
   });
 
+  it("rejects legacy base64 tokens with a null/array answers field (regression)", () => {
+    // `typeof null === "object"` once let `{"a":null}` decode to answers:null,
+    // which then crashed scoreDiagnostic on render. Must be rejected.
+    expect(decodeShareToken(btoa('{"a":null,"s":42}'))).toBeNull();
+    expect(decodeShareToken(btoa('{"a":[],"s":42}'))).toBeNull();
+    expect(decodeShareToken(btoa('{"a":"x","s":42}'))).toBeNull();
+    expect(decodeShareToken(btoa('null'))).toBeNull();
+  });
+
   it("carries no PII — token is only a tag plus answer digits", () => {
     const token = encodeResultToken(DIAGNOSTICS.plg, answersAll("plg", 1));
     // Whole token is the tag "2.plg." followed by answer digits only — no email,

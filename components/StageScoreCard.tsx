@@ -13,6 +13,8 @@ const colorMap: Record<string, { bar: string; badge: string; text: string; bg: s
 interface StageScoreCardProps {
   result: DimensionResult;
   animationDelay?: number;
+  /** Localized label override (falls back to the descriptor's English label). */
+  label?: string;
 }
 
 function getScoreColor(score: number): string {
@@ -22,7 +24,7 @@ function getScoreColor(score: number): string {
   return "text-emerald-400";
 }
 
-export default function StageScoreCard({ result, animationDelay = 0 }: StageScoreCardProps) {
+export default function StageScoreCard({ result, animationDelay = 0, label }: StageScoreCardProps) {
   const colors = colorMap[result.color] ?? colorMap.blue;
 
   return (
@@ -38,7 +40,7 @@ export default function StageScoreCard({ result, animationDelay = 0 }: StageScor
         <div className="flex items-center gap-2">
           <span className="text-2xl">{result.emoji}</span>
           <div>
-            <div className="font-semibold text-white text-sm">{result.label}</div>
+            <div className="font-semibold text-white text-sm">{label ?? result.label}</div>
             <div className="text-xs text-slate-400">Weight: {Math.round(result.weight * 100)}%</div>
           </div>
         </div>

@@ -181,7 +181,15 @@ export default function ShareCard({ diagnostic, result, industry }: ShareCardPro
 
         <button
           onClick={() => {
-            window.location.href = `/?d=${diagnostic.id}`;
+            // Preserve ?lang= / ?industry= on retake; drop only the stale token.
+            try {
+              const url = new URL(window.location.href);
+              url.searchParams.set("d", diagnostic.id);
+              url.searchParams.delete("r");
+              window.location.href = url.toString();
+            } catch {
+              window.location.href = `/?d=${diagnostic.id}`;
+            }
           }}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium transition-colors"
         >

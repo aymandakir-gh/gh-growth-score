@@ -126,18 +126,18 @@ function BenchmarkComparison({
         </div>
       </div>
       <p className="text-sm text-slate-400 mb-4">
-        Your score vs. the typical median per stage.{" "}
+        {t("results.compare.desc")}{" "}
         <span className="text-slate-400">
-          Medians are directional estimates (see{" "}
+          (
           <a
             href="https://github.com/aymandakir-gh/gh-growth-score/blob/main/datasets/benchmarks.md"
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-slate-400"
           >
-            benchmarks
+            {t("results.compare.benchmarks")}
           </a>
-          ).
+          )
         </span>
       </p>
 
@@ -146,7 +146,7 @@ function BenchmarkComparison({
           <span className="text-sm font-semibold text-white">{t("results.compare.overall")}</span>
           <span className="flex items-baseline gap-2 text-sm">
             <span className="text-white font-bold">{cmp.overallScore}</span>
-            <span className="text-slate-400">vs {cmp.overallMedian} median</span>
+            <span className="text-slate-400">{t("results.compare.vsMedian", { median: cmp.overallMedian })}</span>
             <span className={`font-semibold ${deltaClass(cmp.overallStatus)}`}>
               {deltaLabel(cmp.overallDelta)}
             </span>
@@ -157,7 +157,7 @@ function BenchmarkComparison({
             <span className="text-sm text-slate-300">{s.label}</span>
             <span className="flex items-baseline gap-2 text-sm">
               <span className="text-slate-200 font-medium">{s.score}</span>
-              <span className="text-slate-400">vs {s.median}</span>
+              <span className="text-slate-400">{t("results.compare.vsShort", { median: s.median })}</span>
               <span className={`font-semibold w-12 text-right ${deltaClass(s.status)}`}>
                 {deltaLabel(s.delta)}
               </span>
@@ -195,15 +195,18 @@ export default function ResultsDashboard({ diagnostic, result, shared = false, e
 
   const colorByKey = new Map(diagnostic.dimensions.map((d) => [d.key, d.color]));
 
-  function handleEmailSuccess(email: string) {
+  function handleEmailSuccess(_email: string) {
     setEmailUnlocked(true);
+    // Privacy-first: client analytics stay anonymous (no PII). We do NOT
+    // posthog.identify(email) — that would ship the email to PostHog from the
+    // browser and persist an email-keyed identity in localStorage/cookie. The
+    // optional server-side /api/lead proxy is the only place the email is used.
     posthog?.capture("score_completed", {
       diagnostic: diagnostic.id,
       score: result.overallScore,
       bottleneck_stages: result.bottlenecks,
       experiment_count: result.experiments.length,
     });
-    posthog?.identify(email, { email });
   }
 
   return (
@@ -241,6 +244,7 @@ export default function ResultsDashboard({ diagnostic, result, shared = false, e
                     key={dimResult.dimension}
                     result={dimResult}
                     animationDelay={idx * 80}
+                    label={dimLabel(t, diagnostic, dimResult.dimension)}
                   />
                 ))}
             </div>
@@ -255,7 +259,7 @@ export default function ResultsDashboard({ diagnostic, result, shared = false, e
 
           <section
             className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 sm:p-5"
-            aria-label="Top bottlenecks and recommendations"
+            aria-label={t("results.a11y.bottlenecks")}
           >
             <div className="flex items-start gap-3">
               <span className="text-xl sm:text-2xl flex-shrink-0" aria-hidden="true">⚠️</span>

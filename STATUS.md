@@ -2,6 +2,58 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v2.0.0: the multi-diagnostic platform 🚀 ✅
+
+**Released v2.0.0.** AARRR-only tool → a multi-diagnostic, zero-backend growth
+platform. All v2.0.0 goal criteria met and verified. Multi-agent adversarial
+review run; every real finding fixed with a regression test.
+
+### Final gate (all green)
+- `npm run lint` → clean · `npm test` → **228/228** unit · `npm run e2e` →
+  **36/36** Playwright → **264 tests total** (≥240) · `npm run build` → clean ·
+  `npm run screenshot` → 3 shots · **Lighthouse (v2 build): 100 / 100 / 96 / 100**.
+
+### Goal criteria → status
+1. **2nd diagnostic on the shared engine** — ✅ PLG Readiness; both selectable;
+   shared codec/OG/report/PDF/playbook.
+2. **Actionable playbook** — ✅ band-aware tactics, Markdown export, documented.
+3. **PDF export** — ✅ client-side jsPDF, both diagnostics, tested.
+4. **Embeddable widget** — ✅ `<script>` iframe loader, e2e-tested, documented.
+5. **Localization ≥5 langs via `?lang=`** — ✅ 9 langs, AR RTL, never localStorage.
+6. **Benchmark depth** — ✅ per-industry × per-dimension, both diagnostics.
+7. **≥240 tests + Lighthouse ≥95 + CI build+e2e** — ✅ 264 tests, 100/100/96/100,
+   CI runs lint→test→build→e2e.
+8. **README/demo + vercel + tags + adversarial review** — ✅ (this release).
+
+### Multi-agent adversarial review — findings fixed (+ regression tests)
+- **[high] Decode crash** — legacy base64 guard let `{"a":null}` decode to
+  `answers:null`, crashing `scoreDiagnostic` on OG/embed/share render (500).
+  Tightened the guard to reject null/array/non-object. Regression: unit
+  (codec + share-model) + e2e (OG renders generic card, not 500).
+- **[high] Client PII to PostHog** — removed the client-side
+  `posthog.identify(email)` (shipped the email from the browser + persisted an
+  email-keyed identity in localStorage/cookie). Client analytics stay anonymous.
+  Regression: privacy source-scan test.
+- **[high] English leak on localized results** — the benchmark description +
+  "vs N median" were hardcoded English. Localized (`results.compare.desc`,
+  `.benchmarks`, `.vsMedian`, `.vsShort`) across all 9 locales. Regression: e2e (fr).
+- **[medium] Untranslated aria-labels** — quiz picker/progress/back + bottlenecks
+  aria-labels were English on every locale. Localized (`quiz.a11y.*`,
+  `results.a11y.bottlenecks`).
+- **[medium] Untranslated stage labels** — `StageProgress` + `StageScoreCard`
+  rendered descriptor English even where AARRR translations exist. Now use the
+  `dimLabel` fallback.
+- **[medium] Retake dropped `?lang=`/`?industry=`** — rebuilt from a bare string.
+  Now preserves params, drops only `?r=`. Regression: e2e.
+- **[low] Answer→Back race** — a late auto-advance `setTimeout` could override a
+  Back navigation. Now cancelled via a ref on Back/unmount.
+- **[low] Analytics data minimization** — server `/api/lead` now sends a SHA-256
+  hash of the email as the PostHog `distinctId` and drops `company` from
+  analytics; the full lead still goes only to the operator's lead store.
+- **[low] RTL arrow glyph** — playbook step marker switched to a neutral bullet.
+- **Verified safe (no change):** embed `postMessage`/origin checks, OG/codec
+  XSS, open redirect, PDF crash paths, i18n key parity. No secrets in tree.
+
 ## 2026-06-16 — v1.9.0: README + demo refresh ✅
 
 **Released v1.9.0** — docs refreshed for the v2 platform ahead of the adversarial

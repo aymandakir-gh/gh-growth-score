@@ -6,10 +6,13 @@ interface StageProgressProps {
   dimensions: DimensionConfig[];
   currentStageIdx: number;
   completedStageIdxs: number[];
+  /** Localized label resolver (falls back to the descriptor label). */
+  labelFor?: (key: string) => string;
 }
 
-export default function StageProgress({ dimensions, currentStageIdx, completedStageIdxs }: StageProgressProps) {
+export default function StageProgress({ dimensions, currentStageIdx, completedStageIdxs, labelFor }: StageProgressProps) {
   const STAGE_CONFIGS = dimensions;
+  const labelOf = (cfg: DimensionConfig) => labelFor?.(cfg.key) ?? cfg.label;
   return (
     <div className="w-full mb-6">
       {/* Desktop: full labels */}
@@ -52,7 +55,7 @@ export default function StageProgress({ dimensions, currentStageIdx, completedSt
                     : "text-slate-400"
                 }`}
               >
-                {cfg.label}
+                {labelOf(cfg)}
               </span>
             </div>
           );
@@ -90,7 +93,7 @@ export default function StageProgress({ dimensions, currentStageIdx, completedSt
           );
         })}
         <span className="ml-2 text-xs font-semibold text-brand-400">
-          {STAGE_CONFIGS[currentStageIdx]?.label}
+          {STAGE_CONFIGS[currentStageIdx] ? labelOf(STAGE_CONFIGS[currentStageIdx]) : ""}
         </span>
       </div>
     </div>

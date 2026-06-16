@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   type Diagnostic,
   type AnswerValue,
@@ -32,6 +32,12 @@ export default function GrowthQuiz({
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [currentStageIdx, setCurrentStageIdx] = useState(0);
   const [currentQuestionInStage, setCurrentQuestionInStage] = useState(0);
+  // Pending "advance to next question" timer — cancelled if the user navigates
+  // (Back) before it fires, so a late advance can't override the navigation.
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+  }, []);
 
   const DIMS = diagnostic.dimensions;
   const QS = diagnostic.questions;
@@ -56,7 +62,8 @@ export default function GrowthQuiz({
       const newAnswers = { ...answers, [questionId]: value };
       setAnswers(newAnswers);
 
-      setTimeout(() => {
+      if (advanceTimer.current) clearTimeout(advanceTimer.current);
+      advanceTimer.current = setTimeout(() => {
         const nextInStage = currentQuestionInStage + 1;
         if (nextInStage < stageQuestions.length) {
           setCurrentQuestionInStage(nextInStage);
@@ -75,6 +82,8 @@ export default function GrowthQuiz({
   );
 
   function handleBack() {
+    // Cancel any in-flight auto-advance so it can't override this navigation.
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
     if (currentQuestionInStage > 0) {
       setCurrentQuestionInStage(currentQuestionInStage - 1);
     } else if (currentStageIdx > 0) {
@@ -95,7 +104,7 @@ export default function GrowthQuiz({
         <div
           className="flex flex-wrap justify-center gap-2 mb-8"
           role="group"
-          aria-label="Choose a diagnostic"
+          aria-label={t("quiz.a11y.chooseDiagnostic")}
         >
           {diagnostics.map((d) => {
             const active = d.id === diagnostic.id;
@@ -198,6 +207,7 @@ export default function GrowthQuiz({
         dimensions={DIMS}
         currentStageIdx={currentStageIdx}
         completedStageIdxs={completedStageIdxs}
+        labelFor={(key) => dimLabel(t, diagnostic, key)}
       />
 
       {/* Stage header */}
@@ -226,7 +236,7 @@ export default function GrowthQuiz({
           role="progressbar"
           aria-valuenow={totalAnswered}
           aria-valuemax={totalQuestions}
-          aria-label="Quiz progress"
+          aria-label={t("quiz.a11y.progress")}
         >
           <div
             className="bg-brand-500 h-1.5 rounded-full transition-all duration-500"
@@ -250,7 +260,7 @@ export default function GrowthQuiz({
         <button
           onClick={handleBack}
           className="text-sm text-slate-400 hover:text-slate-300 transition-colors flex items-center gap-1"
-          aria-label="Go to previous question"
+          aria-label={t("quiz.a11y.back")}
         >
           {t("quiz.back")}
         </button>

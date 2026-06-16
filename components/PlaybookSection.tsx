@@ -104,7 +104,8 @@ export default function PlaybookSection({ diagnostic, result }: PlaybookSectionP
                     <ul className="space-y-1 mb-2">
                       {tac.steps.map((step) => (
                         <li key={step} className="flex items-start gap-2 text-sm text-slate-300">
-                          <span className="text-brand-400 mt-0.5" aria-hidden="true">→</span>
+                          {/* Neutral bullet (no directional arrow) so it reads correctly in RTL. */}
+                          <span className="text-brand-400 mt-0.5" aria-hidden="true">•</span>
                           <span>{step}</span>
                         </li>
                       ))}

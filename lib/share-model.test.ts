@@ -60,6 +60,12 @@ describe("buildShareModel — AARRR", () => {
     expect(buildShareModel("garbage!!!").valid).toBe(false);
   });
 
+  it("does not throw on a crafted null-answers legacy token (regression)", () => {
+    // Previously decoded to answers:null and crashed scoreDiagnostic.
+    expect(() => buildShareModel(btoa('{"a":null,"s":42}'))).not.toThrow();
+    expect(buildShareModel(btoa('{"a":null,"s":42}')).valid).toBe(false);
+  });
+
   it("marks benchmark data as an estimate", () => {
     expect(buildShareModel(tokenFor(3)).isEstimate).toBe(true);
   });

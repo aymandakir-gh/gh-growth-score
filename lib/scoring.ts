@@ -686,7 +686,16 @@ export function decodeResultFromURL(token: string): {
   try {
     const decoded = atob(token);
     const parsed = JSON.parse(decoded);
-    if (!parsed || typeof parsed !== "object" || typeof parsed.a !== "object") {
+    // `typeof null === "object"` and arrays are objects too — reject both so a
+    // crafted `{"a":null}` token can't decode to `answers:null` and crash
+    // scoreDiagnostic downstream (OG/embed/share render paths).
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      parsed.a === null ||
+      typeof parsed.a !== "object" ||
+      Array.isArray(parsed.a)
+    ) {
       return null;
     }
     return {

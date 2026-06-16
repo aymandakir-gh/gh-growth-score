@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { PostHog } from "posthog-node";
 import { leadRateLimiter, clientIp } from "@/lib/rate-limit";
 
@@ -34,12 +35,13 @@ function isValidEmail(email: string): boolean {
  * Fire a server-side PostHog `lead_captured` event.
  * Uses posthog-node with flushAt:1 + flushInterval:0 for serverless.
  * Graceful degrade: no-op when NEXT_PUBLIC_POSTHOG_KEY is not set.
+ *
+ * Data minimization: analytics holds NO plaintext PII. The `distinctId` is a
+ * SHA-256 hash of the email (stable for funnel/conversion analysis without
+ * storing the address), and no email/name/company is attached. The full lead
+ * (email/name/company) only ever goes to the operator's configured lead store.
  */
-async function captureLeadCaptured(
-  email: string,
-  score: number,
-  company?: string
-): Promise<void> {
+async function captureLeadCaptured(email: string, score: number): Promise<void> {
   const phKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
   if (!phKey) return;
 
@@ -52,12 +54,11 @@ async function captureLeadCaptured(
     });
 
     ph.capture({
-      distinctId: email,
+      distinctId: createHash("sha256").update(email).digest("hex"),
       event: "lead_captured",
       properties: {
         score,
         source: "gh-growth-score",
-        ...(company ? { company } : {}),
       },
     });
 
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
     );
     console.log("[gh-growth-score] Lead (not stored) — score:", overallScore);
     // Still fire analytics in dev so we capture lead intent
-    await captureLeadCaptured(email, Math.round(overallScore), company);
+    await captureLeadCaptured(email, Math.round(overallScore));
     return NextResponse.json({ ok: true }, { status: 200 });
   }
 
@@ -176,7 +177,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fire analytics after confirmed lead storage
-    await captureLeadCaptured(email, Math.round(overallScore), company);
+    await captureLeadCaptured(email, Math.round(overallScore));
 
     return NextResponse.json({ ok: true, id: data.id }, { status: 200 });
   } catch (err) {

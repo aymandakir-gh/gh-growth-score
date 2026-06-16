@@ -1,5 +1,12 @@
 # PRD — gh-growth-score v2.0.0
 
+> ✅ **SHIPPED 2026-06-16 (v2.0.0).** All 8 criteria met and verified; released
+> through tags v1.2.0 → v2.0.0, each CI-green (lint · test · build · e2e). Final
+> gate: 264 tests (228 unit + 36 e2e), Lighthouse 100/100/96/100, multi-agent
+> adversarial review with every real finding fixed + regression-tested. See
+> `STATUS.md` for the per-slice log and the review findings.
+
+
 > **The multi-diagnostic growth platform.** v1.1.0 shipped a single AARRR
 > diagnostic with a self-marketing growth loop. v2.0.0 turns it into a
 > **platform**: a shared diagnostic engine powering two audits, an actionable

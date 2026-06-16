@@ -102,6 +102,15 @@ const en: TranslationDict = {
   "share.title": "Share your score",
   "share.desc": "Your results are encoded in the URL — no account needed to share.",
   "results.compare.industry": "Industry",
+  // ── Review fixes: localized benchmark desc + a11y labels ──────────────
+  "results.compare.desc": "Your score vs. the typical median per stage. Medians are directional estimates.",
+  "results.compare.benchmarks": "benchmarks",
+  "results.compare.vsMedian": "vs {median} median",
+  "results.compare.vsShort": "vs {median}",
+  "quiz.a11y.chooseDiagnostic": "Choose a diagnostic",
+  "quiz.a11y.progress": "Quiz progress",
+  "quiz.a11y.back": "Go to previous question",
+  "results.a11y.bottlenecks": "Top bottlenecks and recommendations",
 };
 
 const ar: TranslationDict = {
@@ -179,6 +188,15 @@ const ar: TranslationDict = {
   "share.title": "شارك نتيجتك",
   "share.desc": "نتائجك مُرمَّزة في الرابط — لا حاجة لحساب للمشاركة.",
   "results.compare.industry": "الصناعة",
+  // ── Review fixes: localized benchmark desc + a11y labels ──────────────
+  "results.compare.desc": "نتيجتك مقابل الوسيط النموذجي لكل مرحلة. الأوساط تقديرات توجيهية.",
+  "results.compare.benchmarks": "المعايير",
+  "results.compare.vsMedian": "مقابل وسيط {median}",
+  "results.compare.vsShort": "مقابل {median}",
+  "quiz.a11y.chooseDiagnostic": "اختر تشخيصاً",
+  "quiz.a11y.progress": "تقدّم الاختبار",
+  "quiz.a11y.back": "الانتقال إلى السؤال السابق",
+  "results.a11y.bottlenecks": "أبرز العوائق والتوصيات",
 };
 
 const it: TranslationDict = {
@@ -254,6 +272,15 @@ const it: TranslationDict = {
   "share.title": "Condividi il tuo punteggio",
   "share.desc": "I tuoi risultati sono codificati nell'URL — nessun account necessario.",
   "results.compare.industry": "Settore",
+  // ── Review fixes: localized benchmark desc + a11y labels ──────────────
+  "results.compare.desc": "Il tuo punteggio rispetto alla mediana tipica per fase. Le mediane sono stime indicative.",
+  "results.compare.benchmarks": "benchmark",
+  "results.compare.vsMedian": "vs mediana {median}",
+  "results.compare.vsShort": "vs {median}",
+  "quiz.a11y.chooseDiagnostic": "Scegli una diagnostica",
+  "quiz.a11y.progress": "Avanzamento del quiz",
+  "quiz.a11y.back": "Vai alla domanda precedente",
+  "results.a11y.bottlenecks": "Principali colli di bottiglia e raccomandazioni",
 };
 
 const nl: TranslationDict = {
@@ -329,6 +356,15 @@ const nl: TranslationDict = {
   "share.title": "Deel je score",
   "share.desc": "Je resultaten staan in de URL — geen account nodig om te delen.",
   "results.compare.industry": "Sector",
+  // ── Review fixes: localized benchmark desc + a11y labels ──────────────
+  "results.compare.desc": "Je score t.o.v. de typische mediaan per fase. Medianen zijn indicatieve schattingen.",
+  "results.compare.benchmarks": "benchmarks",
+  "results.compare.vsMedian": "t.o.v. mediaan {median}",
+  "results.compare.vsShort": "t.o.v. {median}",
+  "quiz.a11y.chooseDiagnostic": "Kies een diagnose",
+  "quiz.a11y.progress": "Voortgang van de quiz",
+  "quiz.a11y.back": "Ga naar de vorige vraag",
+  "results.a11y.bottlenecks": "Belangrijkste knelpunten en aanbevelingen",
 };
 
 const zh: TranslationDict = {
@@ -403,6 +439,15 @@ const zh: TranslationDict = {
   "share.title": "分享你的分数",
   "share.desc": "你的结果已编码在网址中——无需账户即可分享。",
   "results.compare.industry": "行业",
+  // ── Review fixes: localized benchmark desc + a11y labels ──────────────
+  "results.compare.desc": "你的分数与各阶段典型中位数的对比。中位数为方向性估算值。",
+  "results.compare.benchmarks": "基准",
+  "results.compare.vsMedian": "对比中位数 {median}",
+  "results.compare.vsShort": "对比 {median}",
+  "quiz.a11y.chooseDiagnostic": "选择一个诊断",
+  "quiz.a11y.progress": "测验进度",
+  "quiz.a11y.back": "返回上一题",
+  "results.a11y.bottlenecks": "主要瓶颈与建议",
 };
 
 const es: TranslationDict = {
@@ -478,6 +523,15 @@ const es: TranslationDict = {
   "share.title": "Comparte tu puntuación",
   "share.desc": "Tus resultados están codificados en la URL — no necesitas cuenta para compartir.",
   "results.compare.industry": "Sector",
+  // ── Review fixes: localized benchmark desc + a11y labels ──────────────
+  "results.compare.desc": "Tu puntuación frente a la mediana típica por etapa. Las medianas son estimaciones orientativas.",
+  "results.compare.benchmarks": "referencias",
+  "results.compare.vsMedian": "vs mediana {median}",
+  "results.compare.vsShort": "vs {median}",
+  "quiz.a11y.chooseDiagnostic": "Elige un diagnóstico",
+  "quiz.a11y.progress": "Progreso del cuestionario",
+  "quiz.a11y.back": "Ir a la pregunta anterior",
+  "results.a11y.bottlenecks": "Principales cuellos de botella y recomendaciones",
 };
 
 const fr: TranslationDict = {
@@ -553,6 +607,15 @@ const fr: TranslationDict = {
   "share.title": "Partagez votre score",
   "share.desc": "Vos résultats sont encodés dans l'URL — aucun compte requis pour partager.",
   "results.compare.industry": "Secteur",
+  // ── Review fixes: localized benchmark desc + a11y labels ──────────────
+  "results.compare.desc": "Votre score par rapport à la médiane typique par étape. Les médianes sont des estimations indicatives.",
+  "results.compare.benchmarks": "références",
+  "results.compare.vsMedian": "vs médiane {median}",
+  "results.compare.vsShort": "vs {median}",
+  "quiz.a11y.chooseDiagnostic": "Choisissez un diagnostic",
+  "quiz.a11y.progress": "Progression du quiz",
+  "quiz.a11y.back": "Aller à la question précédente",
+  "results.a11y.bottlenecks": "Principaux goulots d'étranglement et recommandations",
 };
 
 const de: TranslationDict = {
@@ -628,6 +691,15 @@ const de: TranslationDict = {
   "share.title": "Teilen Sie Ihr Ergebnis",
   "share.desc": "Ihre Ergebnisse sind in der URL kodiert — kein Konto zum Teilen nötig.",
   "results.compare.industry": "Branche",
+  // ── Review fixes: localized benchmark desc + a11y labels ──────────────
+  "results.compare.desc": "Ihr Wert im Vergleich zum typischen Median je Phase. Mediane sind Richtwerte.",
+  "results.compare.benchmarks": "Benchmarks",
+  "results.compare.vsMedian": "vs. Median {median}",
+  "results.compare.vsShort": "vs. {median}",
+  "quiz.a11y.chooseDiagnostic": "Diagnose wählen",
+  "quiz.a11y.progress": "Quiz-Fortschritt",
+  "quiz.a11y.back": "Zur vorherigen Frage",
+  "results.a11y.bottlenecks": "Wichtigste Engpässe und Empfehlungen",
 };
 
 const ptBr: TranslationDict = {
@@ -703,6 +775,15 @@ const ptBr: TranslationDict = {
   "share.title": "Compartilhe sua pontuação",
   "share.desc": "Seus resultados estão codificados na URL — não precisa de conta para compartilhar.",
   "results.compare.industry": "Setor",
+  // ── Review fixes: localized benchmark desc + a11y labels ──────────────
+  "results.compare.desc": "Sua pontuação vs. a mediana típica por etapa. As medianas são estimativas direcionais.",
+  "results.compare.benchmarks": "referências",
+  "results.compare.vsMedian": "vs mediana {median}",
+  "results.compare.vsShort": "vs {median}",
+  "quiz.a11y.chooseDiagnostic": "Escolha um diagnóstico",
+  "quiz.a11y.progress": "Progresso do quiz",
+  "quiz.a11y.back": "Ir para a pergunta anterior",
+  "results.a11y.bottlenecks": "Principais gargalos e recomendações",
 };
 
 export const translations: Record<Locale, TranslationDict> = {

@@ -19,8 +19,8 @@ export function generateMetadata({ searchParams }: PageProps): Metadata {
   if (!token || !model || !model.valid) return {};
 
   const ogImage = `/api/og?r=${encodeURIComponent(token)}`;
-  const title = `I scored ${model.overallScore}/100 on the Growth Health Score`;
-  const description = `${model.overallLabel} growth engine across the 5 AARRR stages. See the breakdown and take your own free 3-minute audit.`;
+  const title = `I scored ${model.overallScore}/100 on the ${model.diagnosticName}`;
+  const description = `${model.overallLabel} result on the ${model.diagnosticName} (${model.diagnosticShortName}). See the breakdown and take your own free 3-minute audit.`;
 
   return {
     title,

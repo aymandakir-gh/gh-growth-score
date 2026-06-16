@@ -1,10 +1,10 @@
 "use client";
 
-import { Question, AnswerValue } from "@/lib/scoring";
+import { type EngineQuestion, type AnswerValue } from "@/lib/engine";
 import { useI18n } from "@/lib/i18n-context";
 
 interface QuestionCardProps {
-  question: Question;
+  question: EngineQuestion;
   currentAnswer: AnswerValue | undefined;
   questionIndex: number;
   totalInStage: number;

@@ -39,3 +39,24 @@ benchmarks must be expressed on the same 0–100 scale.
 Acquisition 20% · Activation 20% · Retention 25% · Revenue 25% · Referral 10%).
 
 _Last set: 2026-06-16. Source: synthesized placeholder (see above)._
+
+## Median score per PLG dimension (0–100)
+
+The second diagnostic (PLG Readiness) shares the same engine, share codec, and
+OG/report pipeline as AARRR, so it has its own benchmark table — same honest,
+synthesized-placeholder caveat as above. Lives in `PLG_BENCHMARKS`
+(`lib/benchmarks.ts`).
+
+| Dimension | Median | Rationale (directional) |
+|---|---:|---|
+| ⏱️ Time-to-Value | 42 | Most teams have meaningful setup friction; sub-hour TTV is rare. |
+| 🛒 Self-Serve Funnel | 48 | Self-serve signup is common; self-serve *purchase* is less so. |
+| 🎯 Product-Qualified Leads | 38 | A scored, acted-on PQL model is still uncommon. |
+| 🔗 In-Product Virality | 34 | Engineered, measured viral loops are the exception. |
+| 📈 Expansion-Led Revenue | 46 | Expansion motions exist but are often reactive, NRR < 110%. |
+
+**Overall PLG median ≈ 42** (weighted: TTV 25% · Self-Serve 25% · PQL 15% ·
+Virality 15% · Expansion 20%).
+
+> Slice 6 (v1.7.0) extends both tables to **per-industry × per-dimension**
+> medians; the values above become the default ("All industries") baseline.

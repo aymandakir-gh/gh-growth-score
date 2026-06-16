@@ -1,7 +1,6 @@
 import type { ReactElement } from "react";
 import { ImageResponse } from "next/og";
 import { buildShareModel, type ShareModel } from "@/lib/share-model";
-import type { Stage } from "@/lib/scoring";
 
 // Pure string codec + model → safe on the Edge runtime.
 export const runtime = "edge";
@@ -14,14 +13,6 @@ const TEXT = "#e2e8f0";
 const MUTED = "#94a3b8";
 const FAINT = "#64748b";
 const BRAND = "#5c68f5";
-
-const STAGE_COLOR: Record<Stage, string> = {
-  acquisition: "#3b82f6",
-  activation: "#a855f7",
-  retention: "#22c55e",
-  revenue: "#eab308",
-  referral: "#f97316",
-};
 
 function scoreColor(score: number): string {
   if (score >= 70) return "#4ade80";
@@ -36,7 +27,7 @@ function deltaText(delta: number): string {
 }
 
 // ─── Pieces ──────────────────────────────────────────────────────────────────
-function Header() {
+function Header(title: string) {
   return {
     type: "div",
     props: {
@@ -68,7 +59,7 @@ function Header() {
                 type: "div",
                 props: {
                   style: { color: TEXT, fontSize: "30px", fontWeight: 700 },
-                  children: "Growth Health Score",
+                  children: title,
                 },
               },
             ],
@@ -218,7 +209,7 @@ function SocialCard(model: ShareModel) {
         fontFamily: "sans-serif",
       },
       children: [
-        Header(),
+        Header(model.diagnosticName),
         {
           type: "div",
           props: {
@@ -229,8 +220,8 @@ function SocialCard(model: ShareModel) {
                 type: "div",
                 props: {
                   style: { display: "flex", flexDirection: "column", gap: "16px" },
-                  children: model.stages.map((s) =>
-                    StageBar(s.label, s.score, STAGE_COLOR[s.stage], barWidth)
+                  children: model.dimensions.map((s) =>
+                    StageBar(s.label, s.score, s.color, barWidth)
                   ),
                 },
               },
@@ -242,8 +233,8 @@ function SocialCard(model: ShareModel) {
           props: {
             style: { color: FAINT, fontSize: "24px", display: "flex" },
             children: model.valid
-              ? "Free AARRR growth diagnostic — see your bottlenecks + experiments"
-              : "Score your growth engine across Acquisition · Activation · Retention · Revenue · Referral",
+              ? `Free ${model.diagnosticShortName} diagnostic — see your bottlenecks + experiments`
+              : model.diagnosticTagline,
           },
         },
       ],
@@ -268,7 +259,7 @@ function ReportCard(model: ShareModel) {
         fontFamily: "sans-serif",
       },
       children: [
-        Header(),
+        Header(model.diagnosticName),
         ScoreBlock(model),
         {
           type: "div",
@@ -286,14 +277,14 @@ function ReportCard(model: ShareModel) {
                 type: "div",
                 props: {
                   style: { color: TEXT, fontSize: "30px", fontWeight: 700, display: "flex" },
-                  children: "AARRR breakdown vs. industry median",
+                  children: `${model.diagnosticShortName} breakdown vs. industry median`,
                 },
               },
-              ...model.stages.map((s) =>
+              ...model.dimensions.map((s) =>
                 StageBar(
                   `${s.label}${s.isBottleneck ? "  ⚠" : ""}`,
                   s.score,
-                  STAGE_COLOR[s.stage],
+                  s.color,
                   barWidth
                 )
               ),
@@ -346,7 +337,7 @@ function ReportCard(model: ShareModel) {
             children: [
               {
                 type: "div",
-                props: { style: { display: "flex" }, children: "growthackers.io · free & open-source AARRR growth diagnostic" },
+                props: { style: { display: "flex" }, children: `growthackers.io · free & open-source ${model.diagnosticShortName} diagnostic` },
               },
               {
                 type: "div",

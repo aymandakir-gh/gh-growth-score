@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 const TOKEN = "1.342013402230114";
+const PLG_TOKEN = "2.plg.342013402230114";
 
 // WCAG 2.0/2.1 A & AA tags — the standard axe ruleset for production sites.
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
@@ -30,6 +31,14 @@ test.describe("accessibility (axe)", () => {
 
   test("shared results page has no axe violations", async ({ page }) => {
     await page.goto(`/?r=${TOKEN}`);
+    await page.getByText("How you compare").waitFor();
+    await freezeAnimations(page);
+    const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test("shared PLG results page has no axe violations", async ({ page }) => {
+    await page.goto(`/?r=${PLG_TOKEN}`);
     await page.getByText("How you compare").waitFor();
     await freezeAnimations(page);
     const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();

@@ -2,40 +2,50 @@
 
 import { useState, useCallback } from "react";
 import {
-  QUESTIONS,
-  STAGE_CONFIGS,
-  AnswerValue,
-  Stage,
-  ScoringResult,
-  scoreSubmission,
-} from "@/lib/scoring";
+  type Diagnostic,
+  type AnswerValue,
+  type DiagnosticResult,
+  scoreDiagnostic,
+} from "@/lib/engine";
 import QuestionCard from "./QuestionCard";
 import StageProgress from "./StageProgress";
 import { useI18n } from "@/lib/i18n-context";
+import { dimLabel, dimDesc } from "@/lib/labels";
 
 interface GrowthQuizProps {
-  onComplete: (result: ScoringResult) => void;
+  diagnostic: Diagnostic;
+  diagnostics: Diagnostic[];
+  onSelectDiagnostic: (id: string) => void;
+  onComplete: (result: DiagnosticResult) => void;
 }
 
 type QuizPhase = "intro" | "quiz";
 
-export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
+export default function GrowthQuiz({
+  diagnostic,
+  diagnostics,
+  onSelectDiagnostic,
+  onComplete,
+}: GrowthQuizProps) {
   const { t } = useI18n();
   const [phase, setPhase] = useState<QuizPhase>("intro");
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [currentStageIdx, setCurrentStageIdx] = useState(0);
   const [currentQuestionInStage, setCurrentQuestionInStage] = useState(0);
 
-  const currentStageConfig = STAGE_CONFIGS[currentStageIdx];
-  const stageQuestions = QUESTIONS.filter(
-    (q) => q.stage === currentStageConfig?.stage
+  const DIMS = diagnostic.dimensions;
+  const QS = diagnostic.questions;
+
+  const currentStageConfig = DIMS[currentStageIdx];
+  const stageQuestions = QS.filter(
+    (q) => q.dimension === currentStageConfig?.key
   );
   const currentQuestion = stageQuestions[currentQuestionInStage];
   const totalAnswered = Object.keys(answers).length;
-  const totalQuestions = QUESTIONS.length;
+  const totalQuestions = QS.length;
 
-  const completedStageIdxs = STAGE_CONFIGS.reduce<number[]>((acc, cfg, idx) => {
-    const stageQs = QUESTIONS.filter((q) => q.stage === cfg.stage);
+  const completedStageIdxs = DIMS.reduce<number[]>((acc, cfg, idx) => {
+    const stageQs = QS.filter((q) => q.dimension === cfg.key);
     const allAnswered = stageQs.every((q) => answers[q.id] !== undefined);
     if (allAnswered && stageQs.length > 0) acc.push(idx);
     return acc;
@@ -52,17 +62,16 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
           setCurrentQuestionInStage(nextInStage);
         } else {
           const nextStageIdx = currentStageIdx + 1;
-          if (nextStageIdx < STAGE_CONFIGS.length) {
+          if (nextStageIdx < DIMS.length) {
             setCurrentStageIdx(nextStageIdx);
             setCurrentQuestionInStage(0);
           } else {
-            const result = scoreSubmission(newAnswers);
-            onComplete(result);
+            onComplete(scoreDiagnostic(diagnostic, newAnswers));
           }
         }
       }, 180);
     },
-    [answers, currentQuestionInStage, currentStageIdx, stageQuestions.length, onComplete]
+    [answers, currentQuestionInStage, currentStageIdx, stageQuestions.length, DIMS.length, diagnostic, onComplete]
   );
 
   function handleBack() {
@@ -70,10 +79,8 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
       setCurrentQuestionInStage(currentQuestionInStage - 1);
     } else if (currentStageIdx > 0) {
       const prevStageIdx = currentStageIdx - 1;
-      const prevStageConfig = STAGE_CONFIGS[prevStageIdx];
-      const prevStageQuestions = QUESTIONS.filter(
-        (q) => q.stage === prevStageConfig.stage
-      );
+      const prevStageConfig = DIMS[prevStageIdx];
+      const prevStageQuestions = QS.filter((q) => q.dimension === prevStageConfig.key);
       setCurrentStageIdx(prevStageIdx);
       setCurrentQuestionInStage(prevStageQuestions.length - 1);
     }
@@ -81,32 +88,65 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
 
   // ── Intro ─────────────────────────────────────────────────────────────────
   if (phase === "intro") {
+    const isAarrr = diagnostic.id === "aarrr";
     return (
       <div className="animate-fade-in">
+        {/* Diagnostic picker */}
+        <div
+          className="flex flex-wrap justify-center gap-2 mb-8"
+          role="group"
+          aria-label="Choose a diagnostic"
+        >
+          {diagnostics.map((d) => {
+            const active = d.id === diagnostic.id;
+            return (
+              <button
+                key={d.id}
+                onClick={() => onSelectDiagnostic(d.id)}
+                aria-pressed={active}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold transition-colors ${
+                  active
+                    ? "border-brand-500 bg-brand-500/15 text-white"
+                    : "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-brand-500/50 hover:text-white"
+                }`}
+              >
+                <span aria-hidden="true">{d.emoji}</span>
+                {d.shortName}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Hero */}
         <div className="text-center space-y-4 mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/15 border border-brand-500/30 text-brand-400 text-xs font-semibold tracking-wide uppercase">
             {t("quiz.badge")}
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
-            {t("quiz.hero.title1")}
-            <br />
-            <span className="text-brand-400">{t("quiz.hero.title2")}</span>
-          </h1>
+          {isAarrr ? (
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
+              {t("quiz.hero.title1")}
+              <br />
+              <span className="text-brand-400">{t("quiz.hero.title2")}</span>
+            </h1>
+          ) : (
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
+              {diagnostic.name}
+            </h1>
+          )}
           <p className="text-slate-400 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
-            {t("quiz.hero.subtitle")}
+            {isAarrr ? t("quiz.hero.subtitle") : diagnostic.tagline}
           </p>
         </div>
 
-        {/* Stage pills */}
+        {/* Dimension pills */}
         <div className="flex flex-wrap justify-center gap-2 mb-8">
-          {STAGE_CONFIGS.map((cfg) => (
+          {DIMS.map((cfg) => (
             <span
-              key={cfg.stage}
+              key={cfg.key}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-sm"
             >
               <span aria-hidden="true">{cfg.emoji}</span>
-              {t(`stage.${cfg.stage}`)}
+              {dimLabel(t, diagnostic, cfg.key)}
             </span>
           ))}
         </div>
@@ -115,21 +155,9 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
         <div className="grid sm:grid-cols-3 gap-3 text-start max-w-xl mx-auto mb-8">
           {(
             [
-              {
-                icon: "📊",
-                titleKey: "quiz.feature.stageScores",
-                descKey: "quiz.feature.stageScores.desc",
-              },
-              {
-                icon: "🔍",
-                titleKey: "quiz.feature.bottleneck",
-                descKey: "quiz.feature.bottleneck.desc",
-              },
-              {
-                icon: "🧪",
-                titleKey: "quiz.feature.experiments",
-                descKey: "quiz.feature.experiments.desc",
-              },
+              { icon: "📊", titleKey: "quiz.feature.stageScores", descKey: "quiz.feature.stageScores.desc" },
+              { icon: "🔍", titleKey: "quiz.feature.bottleneck", descKey: "quiz.feature.bottleneck.desc" },
+              { icon: "🧪", titleKey: "quiz.feature.experiments", descKey: "quiz.feature.experiments.desc" },
             ] as const
           ).map((item) => (
             <div
@@ -147,54 +175,6 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* How it works */}
-        <div className="max-w-xl mx-auto mb-8">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest text-center mb-4">
-            {t("quiz.howItWorks")}
-          </h2>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-0">
-            {(
-              [
-                {
-                  step: "1",
-                  labelKey: "quiz.step1.label",
-                  descKey: "quiz.step1.desc",
-                },
-                {
-                  step: "2",
-                  labelKey: "quiz.step2.label",
-                  descKey: "quiz.step2.desc",
-                },
-                {
-                  step: "3",
-                  labelKey: "quiz.step3.label",
-                  descKey: "quiz.step3.desc",
-                },
-              ] as const
-            ).map((item, idx) => (
-              <div
-                key={item.step}
-                className="flex sm:flex-col items-start sm:items-center gap-3 sm:gap-2 sm:flex-1 sm:text-center relative"
-              >
-                {idx < 2 && (
-                  <div className="hidden sm:block absolute start-1/2 top-4 w-full h-px bg-slate-700 z-0" />
-                )}
-                <div className="relative z-10 flex-shrink-0 w-8 h-8 rounded-full bg-brand-600 text-white text-sm font-bold flex items-center justify-center">
-                  {item.step}
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-white">
-                    {t(item.labelKey)}
-                  </div>
-                  <div className="text-xs text-slate-400 leading-snug">
-                    {t(item.descKey)}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* CTA */}
@@ -215,6 +195,7 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
   return (
     <div className="max-w-xl mx-auto space-y-6 animate-fade-in">
       <StageProgress
+        dimensions={DIMS}
         currentStageIdx={currentStageIdx}
         completedStageIdxs={completedStageIdxs}
       />
@@ -228,18 +209,15 @@ export default function GrowthQuiz({ onComplete }: GrowthQuizProps) {
             </span>
             <div>
               <div className="text-sm font-bold text-white">
-                {t(`stage.${currentStageConfig.stage}`)}
+                {dimLabel(t, diagnostic, currentStageConfig.key)}
               </div>
               <div className="text-xs text-slate-400">
-                {t(`stage.${currentStageConfig.stage}.desc`)}
+                {dimDesc(t, diagnostic, currentStageConfig.key)}
               </div>
             </div>
           </div>
           <span className="text-sm font-semibold text-slate-400">
-            {t("results.progress", {
-              answered: totalAnswered,
-              total: totalQuestions,
-            })}
+            {t("results.progress", { answered: totalAnswered, total: totalQuestions })}
           </span>
         </div>
 

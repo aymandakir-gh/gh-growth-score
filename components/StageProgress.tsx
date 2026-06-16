@@ -1,13 +1,15 @@
 "use client";
 
-import { STAGE_CONFIGS } from "@/lib/scoring";
+import { type DimensionConfig } from "@/lib/engine";
 
 interface StageProgressProps {
+  dimensions: DimensionConfig[];
   currentStageIdx: number;
   completedStageIdxs: number[];
 }
 
-export default function StageProgress({ currentStageIdx, completedStageIdxs }: StageProgressProps) {
+export default function StageProgress({ dimensions, currentStageIdx, completedStageIdxs }: StageProgressProps) {
+  const STAGE_CONFIGS = dimensions;
   return (
     <div className="w-full mb-6">
       {/* Desktop: full labels */}
@@ -20,7 +22,7 @@ export default function StageProgress({ currentStageIdx, completedStageIdxs }: S
           const isCurrent = idx === currentStageIdx;
 
           return (
-            <div key={cfg.stage} className="relative z-10 flex flex-col items-center gap-1.5" style={{ width: `${100 / STAGE_CONFIGS.length}%` }}>
+            <div key={cfg.key} className="relative z-10 flex flex-col items-center gap-1.5" style={{ width: `${100 / STAGE_CONFIGS.length}%` }}>
               {/* Dot */}
               <div
                 className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${
@@ -64,7 +66,7 @@ export default function StageProgress({ currentStageIdx, completedStageIdxs }: S
           const isCurrent = idx === currentStageIdx;
 
           return (
-            <div key={cfg.stage} className="flex items-center gap-1.5">
+            <div key={cfg.key} className="flex items-center gap-1.5">
               <div
                 className={`rounded-full transition-all duration-300 flex items-center justify-center ${
                   isDone

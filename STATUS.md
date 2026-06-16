@@ -2,6 +2,44 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v1.2.0: shared engine + 2nd diagnostic (PLG) ✅
+
+**Released v1.2.0** — the AARRR tool is now a **multi-diagnostic platform** on a
+shared engine. Still zero-backend & privacy-first. See `PRD.md` (Slice 1).
+
+### Verification (gate — all green)
+- `npm run build` → compiles + type-checks
+- `npm test` → **192/192** unit (was 155; +engine, +diagnostics, +PLG share-model)
+- `npm run e2e` → **15/15** Playwright (AARRR loop + PLG selectable/share/OG + axe ×3)
+- `npm run screenshot` → regenerated `docs/screenshot.png`
+
+### What shipped
+- **`lib/engine.ts`** — generic, pure, Edge-safe scoring core. A diagnostic is a
+  `Diagnostic` descriptor (dimensions + questions + experiments); scoring,
+  bottleneck ranking, ICE selection, and the share codec all operate on it.
+- **`lib/scoring.ts` refactor** — AARRR is now `AARRR_DIAGNOSTIC` and every
+  exported function **delegates to the engine**. Signatures/outputs unchanged;
+  the 155 legacy tests + a new explicit parity test are the guard.
+- **`lib/diagnostics/plg.ts`** — second diagnostic: **PLG Readiness** (5×3:
+  Time-to-Value · Self-Serve · PQL · In-Product Virality · Expansion-Led
+  Revenue) with experiments + recommendations.
+- **`lib/diagnostics/index.ts`** — registry + **multi-diagnostic share codec**:
+  AARRR keeps emitting `1.<digits>` (back-compat); others emit the
+  self-describing `2.<id>.<digits>`. v1 + legacy base64 still decode. No PII.
+- **Diagnostic-agnostic pipeline** — `share-model`, OG/report route, and page
+  metadata now read the descriptor (name, colors, dimensions); benchmarks +
+  recommendations generalized (`compareDiagnosticToBenchmark`,
+  `getDimensionRecommendation`). PLG medians documented in `datasets/`.
+- **Selectable UI** — landing has a diagnostic picker; `?d=plg` deep-links; the
+  whole quiz/results/share/OG flow is descriptor-driven. AARRR i18n preserved
+  via a label fallback (`lib/labels.ts`).
+
+### Decisions
+- **2nd diagnostic = PLG Readiness** — same 5×3 shape reuses the codec/OG/report
+  pipeline cleanly; honestly authorable.
+- **Token v2 = `2.<id>.<digits>`** — self-describing, URL-safe, no PII.
+- Engine is the single implementation; AARRR rides on it (no duplicate logic).
+
 ## 2026-06-16 — v1.1.0: the growth loop ✅
 
 **Released v1.1.0** — the tool now markets itself, still **zero-backend &

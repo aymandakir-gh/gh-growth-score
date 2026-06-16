@@ -1,6 +1,6 @@
 "use client";
 
-import { StageResult } from "@/lib/scoring";
+import { type DimensionResult } from "@/lib/engine";
 
 const colorMap: Record<string, { bar: string; badge: string; text: string; bg: string }> = {
   blue:   { bar: "bg-blue-500",   badge: "bg-blue-500/20 text-blue-300",   text: "text-blue-400",   bg: "border-blue-500/30" },
@@ -11,7 +11,7 @@ const colorMap: Record<string, { bar: string; badge: string; text: string; bg: s
 };
 
 interface StageScoreCardProps {
-  result: StageResult;
+  result: DimensionResult;
   animationDelay?: number;
 }
 

@@ -1,22 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { ScoringResult, encodeResultForURL } from "@/lib/scoring";
+import { type Diagnostic, type DiagnosticResult } from "@/lib/engine";
+import { encodeResultToken } from "@/lib/diagnostics";
 
 interface ShareCardProps {
-  result: ScoringResult;
+  diagnostic: Diagnostic;
+  result: DiagnosticResult;
 }
 
-export default function ShareCard({ result }: ShareCardProps) {
+export default function ShareCard({ diagnostic, result }: ShareCardProps) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  const token = encodeResultForURL(result);
+  const token = encodeResultToken(diagnostic, result.answers);
   const encodedToken = encodeURIComponent(token);
   const shareUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/?r=${encodedToken}`
       : `https://growth-score.growthackers.io/?r=${encodedToken}`;
+
+  // AARRR keeps its long-standing report filename; others derive from the slug.
+  const fileBase =
+    diagnostic.id === "aarrr" ? "growth-health-score" : `${diagnostic.slug}-readiness-score`;
+
+  const labelByKey = new Map(diagnostic.dimensions.map((d) => [d.key, d.label]));
 
   // Download the branded report PNG. Stateless render of the URL token by the
   // /api/og route (no DB, no PII) — fetched client-side and saved as a file.
@@ -29,7 +37,7 @@ export default function ShareCard({ result }: ShareCardProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `growth-health-score-${result.overallScore}.png`;
+      a.download = `${fileBase}-${result.overallScore}.png`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -42,18 +50,18 @@ export default function ShareCard({ result }: ShareCardProps) {
   }
 
   const summaryText = [
-    `📊 My Growth Health Score: ${result.overallScore}/100`,
+    `📊 My ${diagnostic.name}: ${result.overallScore}/100`,
     ``,
-    `AARRR Breakdown:`,
-    ...result.stageResults.map(
+    `${diagnostic.shortName} Breakdown:`,
+    ...result.dimensionResults.map(
       (s) => `${s.emoji} ${s.label}: ${s.rawScore}/100${s.isBottleneck ? " ⚠️" : ""}`
     ),
     ``,
     `Top bottlenecks: ${result.bottlenecks
-      .map((b) => b.charAt(0).toUpperCase() + b.slice(1))
+      .map((b) => labelByKey.get(b) ?? b)
       .join(", ")}`,
     ``,
-    `Get your free Growth Health Score → ${shareUrl}`,
+    `Get your free ${diagnostic.name} → ${shareUrl}`,
   ].join("\n");
 
   async function copyLink() {
@@ -77,9 +85,9 @@ export default function ShareCard({ result }: ShareCardProps) {
   }
 
   const tweetText = encodeURIComponent(
-    `I scored ${result.overallScore}/100 on the Growth Health Score\n\nTop bottlenecks: ${result.bottlenecks
-      .map((b) => b.charAt(0).toUpperCase() + b.slice(1))
-      .join(", ")}\n\nTake the free AARRR audit → `
+    `I scored ${result.overallScore}/100 on the ${diagnostic.name}\n\nTop bottlenecks: ${result.bottlenecks
+      .map((b) => labelByKey.get(b) ?? b)
+      .join(", ")}\n\nTake the free audit → `
   );
   const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}${encodeURIComponent(shareUrl)}`;
 
@@ -136,7 +144,7 @@ export default function ShareCard({ result }: ShareCardProps) {
 
         <button
           onClick={() => {
-            window.location.href = "/";
+            window.location.href = `/?d=${diagnostic.id}`;
           }}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium transition-colors"
         >

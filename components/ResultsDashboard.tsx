@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { usePostHog } from "posthog-js/react";
-import { ScoringResult, Stage } from "@/lib/scoring";
-import { compareToBenchmark } from "@/lib/benchmarks";
-import { getStageRecommendation } from "@/lib/recommendations";
+import { type Diagnostic, type DiagnosticResult } from "@/lib/engine";
+import { compareDiagnosticToBenchmark } from "@/lib/benchmarks";
+import { getDimensionRecommendation } from "@/lib/recommendations";
 import ScoreGauge from "./ScoreGauge";
 import StageScoreCard from "./StageScoreCard";
 import ExperimentCard from "./ExperimentCard";
 import ShareCard from "./ShareCard";
 import EmailGate from "./EmailGate";
 import { useI18n } from "@/lib/i18n-context";
+import { dimLabel } from "@/lib/labels";
 
 interface ResultsDashboardProps {
-  result: ScoringResult;
+  diagnostic: Diagnostic;
+  result: DiagnosticResult;
   /** True when opened from a shared ?r= link — skips the email gate. */
   shared?: boolean;
 }
@@ -59,19 +61,19 @@ function SharedBanner() {
   );
 }
 
-function BenchmarkComparison({ result }: { result: ScoringResult }) {
-  const stageScores = result.stageResults.reduce(
+function BenchmarkComparison({ diagnostic, result }: { diagnostic: Diagnostic; result: DiagnosticResult }) {
+  const dimScores = result.dimensionResults.reduce(
     (acc, s) => {
-      acc[s.stage] = s.rawScore;
+      acc[s.dimension] = s.rawScore;
       return acc;
     },
-    {} as Record<Stage, number>
+    {} as Record<string, number>
   );
-  const cmp = compareToBenchmark(stageScores);
+  const cmp = compareDiagnosticToBenchmark(diagnostic, dimScores);
 
   function deltaLabel(delta: number) {
     if (delta > 0) return `+${delta}`;
-    return String(delta); // already has minus sign, or 0
+    return String(delta);
   }
   function deltaClass(status: string) {
     if (status === "above") return "text-green-400";
@@ -111,8 +113,8 @@ function BenchmarkComparison({ result }: { result: ScoringResult }) {
             </span>
           </span>
         </div>
-        {cmp.stages.map((s) => (
-          <div key={s.stage} className="flex items-center justify-between px-4 py-2.5">
+        {cmp.dimensions.map((s) => (
+          <div key={s.key} className="flex items-center justify-between px-4 py-2.5">
             <span className="text-sm text-slate-300">{s.label}</span>
             <span className="flex items-baseline gap-2 text-sm">
               <span className="text-slate-200 font-medium">{s.score}</span>
@@ -128,22 +130,21 @@ function BenchmarkComparison({ result }: { result: ScoringResult }) {
   );
 }
 
-export default function ResultsDashboard({ result, shared = false }: ResultsDashboardProps) {
+export default function ResultsDashboard({ diagnostic, result, shared = false }: ResultsDashboardProps) {
   const { t } = useI18n();
   const posthog = usePostHog();
   const [emailUnlocked, setEmailUnlocked] = useState(shared);
 
+  const colorByKey = new Map(diagnostic.dimensions.map((d) => [d.key, d.color]));
+
   function handleEmailSuccess(email: string) {
     setEmailUnlocked(true);
-
-    // score_completed — full report unlocked after email gate
     posthog?.capture("score_completed", {
+      diagnostic: diagnostic.id,
       score: result.overallScore,
       bottleneck_stages: result.bottlenecks,
       experiment_count: result.experiments.length,
     });
-
-    // Associate future events with this user
     posthog?.identify(email, { email });
   }
 
@@ -151,7 +152,7 @@ export default function ResultsDashboard({ result, shared = false }: ResultsDash
     <div className="space-y-8 sm:space-y-10 animate-fade-in">
       <section className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/15 border border-brand-500/30 text-brand-400 text-xs font-semibold tracking-wide uppercase mb-2">
-          {t("results.badge")}
+          {diagnostic.emoji} {diagnostic.name}
         </div>
         <ScoreGauge score={result.overallScore} />
         <ScoreLegend />
@@ -174,20 +175,20 @@ export default function ResultsDashboard({ result, shared = false }: ResultsDash
               {t("results.stageBreakdown.desc")}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {result.stageResults
+              {result.dimensionResults
                 .slice()
                 .sort((a, b) => a.rawScore - b.rawScore)
-                .map((stageResult, idx) => (
+                .map((dimResult, idx) => (
                   <StageScoreCard
-                    key={stageResult.stage}
-                    result={stageResult}
+                    key={dimResult.dimension}
+                    result={dimResult}
                     animationDelay={idx * 80}
                   />
                 ))}
             </div>
           </section>
 
-          <BenchmarkComparison result={result} />
+          <BenchmarkComparison diagnostic={diagnostic} result={result} />
 
           <section
             className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 sm:p-5"
@@ -197,29 +198,25 @@ export default function ResultsDashboard({ result, shared = false }: ResultsDash
               <span className="text-xl sm:text-2xl flex-shrink-0" aria-hidden="true">⚠️</span>
               <div className="w-full">
                 <h3 className="font-semibold text-white mb-1">
-                  {t("results.bottlenecks.title", {
-                    count: result.bottlenecks.length,
-                  })}
+                  {t("results.bottlenecks.title", { count: result.bottlenecks.length })}
                 </h3>
                 <p className="text-sm text-slate-400 mb-4">
                   {t("results.bottlenecks.desc")}
                 </p>
                 <div className="space-y-3">
-                  {result.bottlenecks.map((stage) => {
-                    const sr = result.stageResults.find((s) => s.stage === stage);
+                  {result.bottlenecks.map((key) => {
+                    const sr = result.dimensionResults.find((s) => s.dimension === key);
                     if (!sr) return null;
-                    const rec = getStageRecommendation(stage, sr.rawScore);
+                    const rec = getDimensionRecommendation(diagnostic, key, sr.rawScore);
                     return (
                       <div
-                        key={stage}
+                        key={key}
                         className="rounded-lg border border-slate-700/70 bg-slate-900/50 p-3.5"
                       >
                         <div className="flex items-center gap-2 mb-1.5">
                           <span aria-hidden="true">{sr.emoji}</span>
-                          <span className="font-semibold text-white">{sr.label}</span>
-                          <span className="text-red-400 font-bold text-sm">
-                            {sr.rawScore}/100
-                          </span>
+                          <span className="font-semibold text-white">{dimLabel(t, diagnostic, key)}</span>
+                          <span className="text-red-400 font-bold text-sm">{sr.rawScore}/100</span>
                         </div>
                         <p className="text-sm text-slate-300 font-medium">{rec.headline}</p>
                         <p className="text-sm text-slate-400 mt-1">{rec.action}</p>
@@ -240,12 +237,18 @@ export default function ResultsDashboard({ result, shared = false }: ResultsDash
             </p>
             <div className="space-y-3 sm:space-y-4">
               {result.experiments.map((exp, idx) => (
-                <ExperimentCard key={exp.title} experiment={exp} rank={idx + 1} />
+                <ExperimentCard
+                  key={exp.title}
+                  experiment={exp}
+                  rank={idx + 1}
+                  label={dimLabel(t, diagnostic, exp.dimension)}
+                  colorStem={colorByKey.get(exp.dimension)}
+                />
               ))}
             </div>
           </section>
 
-          <ShareCard result={result} />
+          <ShareCard diagnostic={diagnostic} result={result} />
 
           <section className="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-5 sm:p-6 text-center">
             <p className="text-slate-400 text-sm leading-relaxed">

@@ -1,8 +1,26 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Growth-Health-Score · Scoring Engine
-// All questions, weights, and pure scoring functions live here.
-// This file is the single source of truth — UI just renders what's here.
+// Growth-Health-Score · AARRR diagnostic (the original).
+//
+// This file owns the AARRR content (questions, weights, experiments) and keeps
+// its long-standing public API. As of v2 the actual scoring runs on the shared,
+// generic `lib/engine.ts`: AARRR is expressed as a `Diagnostic` descriptor
+// (AARRR_DIAGNOSTIC) and every function below delegates to the engine. The
+// existing unit tests are the parity guard — behavior is unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
+
+import {
+  type Diagnostic,
+  type EngineExperiment,
+  computeDimensionScore as engineDimensionScore,
+  computeOverallScore as engineOverallScore,
+  findBottlenecks as engineFindBottlenecks,
+  computeICE as engineComputeICE,
+  selectTopExperiments as engineSelectTopExperiments,
+  scoreDiagnostic as engineScoreDiagnostic,
+  getScoreLabel as engineGetScoreLabel,
+  encodeAnswers as engineEncodeAnswers,
+  parseAnswerDigits as engineParseAnswerDigits,
+} from "./engine";
 
 export type Stage = "acquisition" | "activation" | "retention" | "revenue" | "referral";
 
@@ -485,148 +503,123 @@ export const EXPERIMENT_BANK: Record<Stage, Experiment[]> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PURE SCORING FUNCTIONS
+// AARRR_DIAGNOSTIC — the AARRR content expressed as a generic Diagnostic
+// descriptor. This is what makes AARRR run on the shared engine. The mappings
+// are 1:1: a stage is a dimension, the question/experiment `stage` field is the
+// engine's `dimension` field.
+// ─────────────────────────────────────────────────────────────────────────────
+export const AARRR_DIAGNOSTIC: Diagnostic = {
+  id: "aarrr",
+  slug: "aarrr",
+  name: "Growth Health Score",
+  shortName: "AARRR",
+  tagline: "Diagnose your growth engine across the 5 AARRR stages.",
+  emoji: "📊",
+  dimensions: STAGE_CONFIGS.map((c) => ({
+    key: c.stage,
+    label: c.label,
+    emoji: c.emoji,
+    weight: c.weight,
+    description: c.description,
+    color: c.color,
+  })),
+  questions: QUESTIONS.map((q) => ({
+    id: q.id,
+    dimension: q.stage,
+    text: q.text,
+    hint: q.hint,
+    options: q.options,
+  })),
+  experiments: Object.fromEntries(
+    (Object.keys(EXPERIMENT_BANK) as Stage[]).map((stage) => [
+      stage,
+      EXPERIMENT_BANK[stage].map((e) => ({
+        title: e.title,
+        description: e.description,
+        impact: e.impact,
+        confidence: e.confidence,
+        effort: e.effort,
+        ice: e.ice,
+        dimension: e.stage,
+      })),
+    ])
+  ),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PURE SCORING FUNCTIONS — thin AARRR-typed wrappers over the shared engine.
+// Signatures + outputs are unchanged from v1 (the unit suite is the guard).
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Compute the raw score (0–100) for a single stage.
- * Each answer is 0–4; max per question = 4; normalized to 100.
- */
+/** Map an engine experiment back to the legacy AARRR Experiment shape. */
+function toLegacyExperiment(e: EngineExperiment): Experiment {
+  return {
+    title: e.title,
+    description: e.description,
+    impact: e.impact,
+    confidence: e.confidence,
+    effort: e.effort,
+    ice: e.ice,
+    stage: e.dimension as Stage,
+  };
+}
+
+/** Raw 0–100 score for a single AARRR stage. */
 export function computeStageScore(
   stage: Stage,
   answers: Record<string, AnswerValue>
 ): number {
-  const stageQuestions = QUESTIONS.filter((q) => q.stage === stage);
-  if (stageQuestions.length === 0) return 0;
-
-  const total = stageQuestions.reduce((sum, q) => {
-    const val = answers[q.id] ?? 0;
-    return sum + val;
-  }, 0);
-
-  const max = stageQuestions.length * 4; // 4 = max AnswerValue
-  return Math.round((total / max) * 100);
+  return engineDimensionScore(AARRR_DIAGNOSTIC, stage, answers);
 }
 
-/**
- * Compute the weighted overall score (0–100).
- * Weighted sum of per-stage raw scores.
- */
-export function computeOverallScore(
-  stageScores: Record<Stage, number>
-): number {
-  const weighted = STAGE_CONFIGS.reduce((sum, cfg) => {
-    return sum + stageScores[cfg.stage] * cfg.weight;
-  }, 0);
-  return Math.round(weighted);
+/** Weighted overall 0–100 from per-stage raw scores. */
+export function computeOverallScore(stageScores: Record<Stage, number>): number {
+  return engineOverallScore(AARRR_DIAGNOSTIC, stageScores);
 }
 
-/**
- * Identify the N weakest stages by raw score.
- * Returns stages sorted ascending (worst first).
- */
+/** The N weakest stages by raw score (worst first). */
 export function findBottlenecks(
   stageScores: Record<Stage, number>,
   n = 3
 ): Stage[] {
-  return (Object.entries(stageScores) as [Stage, number][])
-    .sort(([, a], [, b]) => a - b)
-    .slice(0, n)
-    .map(([stage]) => stage);
+  return engineFindBottlenecks(stageScores, n) as Stage[];
 }
 
-/**
- * Compute ICE score for a single experiment.
- * ICE = (impact × confidence) / effort
- * All values 1–10; higher ICE = higher priority.
- */
+/** ICE = round(impact × confidence / effort). */
 export function computeICE(exp: Omit<Experiment, "ice">): number {
-  return Math.round((exp.impact * exp.confidence) / exp.effort);
+  return engineComputeICE({ ...exp, dimension: exp.stage });
 }
 
-/**
- * Select the top 3 ICE-prioritized experiments from the weakest stages.
- * From each bottleneck stage, pick the single highest-ICE experiment.
- * If fewer than 3 bottleneck stages, fill from the next weakest.
- */
-export function selectTopExperiments(
-  bottlenecks: Stage[],
-  n = 3
-): Experiment[] {
-  const experiments: Experiment[] = [];
-  const stagesToSearch = [...bottlenecks];
-
-  // Add remaining stages if we need more experiments
-  for (const cfg of STAGE_CONFIGS) {
-    if (!stagesToSearch.includes(cfg.stage)) {
-      stagesToSearch.push(cfg.stage);
-    }
-  }
-
-  for (const stage of stagesToSearch) {
-    if (experiments.length >= n) break;
-    const bank = EXPERIMENT_BANK[stage];
-    if (!bank || bank.length === 0) continue;
-
-    // Compute ICE for each and pick the best one
-    const best = bank
-      .map((exp) => ({ ...exp, ice: computeICE(exp) }))
-      .sort((a, b) => b.ice - a.ice)[0];
-
-    experiments.push(best);
-  }
-
-  return experiments.slice(0, n);
+/** Top N ICE-prioritized experiments from the weakest stages. */
+export function selectTopExperiments(bottlenecks: Stage[], n = 3): Experiment[] {
+  return engineSelectTopExperiments(AARRR_DIAGNOSTIC, bottlenecks, n).map(
+    toLegacyExperiment
+  );
 }
 
-/**
- * Full scoring pipeline — takes raw answers, returns complete ScoringResult.
- */
+/** Full AARRR scoring pipeline. */
 export function scoreSubmission(
   answers: Record<string, AnswerValue>
 ): ScoringResult {
-  // Per-stage raw scores
-  const stageScores: Record<Stage, number> = {
-    acquisition: computeStageScore("acquisition", answers),
-    activation: computeStageScore("activation", answers),
-    retention: computeStageScore("retention", answers),
-    revenue: computeStageScore("revenue", answers),
-    referral: computeStageScore("referral", answers),
-  };
-
-  const overallScore = computeOverallScore(stageScores);
-  const bottlenecks = findBottlenecks(stageScores, 3);
-  const experiments = selectTopExperiments(bottlenecks, 3);
-
-  // Build sorted stage results (worst first for ranking)
-  const sortedByScore = (Object.entries(stageScores) as [Stage, number][]).sort(
-    ([, a], [, b]) => a - b
-  );
-
-  const stageResults: StageResult[] = STAGE_CONFIGS.map((cfg) => {
-    const rawScore = stageScores[cfg.stage];
-    const rank = sortedByScore.findIndex(([s]) => s === cfg.stage) + 1;
-    return {
-      stage: cfg.stage,
-      label: cfg.label,
-      emoji: cfg.emoji,
-      color: cfg.color,
-      rawScore,
-      weightedScore: Math.round(rawScore * cfg.weight),
-      weight: cfg.weight,
-      questionCount: QUESTIONS.filter((q) => q.stage === cfg.stage).length,
-      isBottleneck: bottlenecks.includes(cfg.stage),
-      rank,
-    };
-  });
-
+  const r = engineScoreDiagnostic(AARRR_DIAGNOSTIC, answers);
   return {
-    overallScore,
-    stageResults,
-    bottlenecks,
-    experiments,
+    overallScore: r.overallScore,
+    stageResults: r.dimensionResults.map((d) => ({
+      stage: d.dimension as Stage,
+      label: d.label,
+      emoji: d.emoji,
+      color: d.color,
+      rawScore: d.rawScore,
+      weightedScore: d.weightedScore,
+      weight: d.weight,
+      questionCount: d.questionCount,
+      isBottleneck: d.isBottleneck,
+      rank: d.rank,
+    })),
+    bottlenecks: r.bottlenecks as Stage[],
+    experiments: r.experiments.map(toLegacyExperiment),
     answers,
-    completedAt: new Date().toISOString(),
+    completedAt: r.completedAt,
   };
 }
 
@@ -635,18 +628,20 @@ export const SHARE_FORMAT_VERSION = "1";
 
 /** Recompute the weighted overall score directly from raw answers. */
 function overallFromAnswers(answers: Record<string, AnswerValue>): number {
-  const stageScores = {
-    acquisition: computeStageScore("acquisition", answers),
-    activation: computeStageScore("activation", answers),
-    retention: computeStageScore("retention", answers),
-    revenue: computeStageScore("revenue", answers),
-    referral: computeStageScore("referral", answers),
-  } as Record<Stage, number>;
-  return computeOverallScore(stageScores);
+  return engineOverallScore(
+    AARRR_DIAGNOSTIC,
+    {
+      acquisition: computeStageScore("acquisition", answers),
+      activation: computeStageScore("activation", answers),
+      retention: computeStageScore("retention", answers),
+      revenue: computeStageScore("revenue", answers),
+      referral: computeStageScore("referral", answers),
+    } as Record<Stage, number>
+  );
 }
 
 /**
- * Encode a ScoringResult into a compact, URL-safe share token.
+ * Encode a ScoringResult into a compact, URL-safe AARRR share token.
  *
  * Format (v1):  "1." + one digit (0–4) per question in fixed QUESTIONS order.
  *   e.g.  "1.342013402230114"
@@ -655,17 +650,15 @@ function overallFromAnswers(answers: Record<string, AnswerValue>): number {
  * timestamp, or free text. It is not PII. Opening the link recomputes the exact
  * score/breakdown via scoreSubmission(). Digits + "." are URL-safe and the
  * function is pure string work, so it also runs on the Edge runtime (OG route).
+ *
+ * (For multi-diagnostic encoding, see lib/diagnostics/index.ts → encodeResultToken.)
  */
 export function encodeResultForURL(result: ScoringResult): string {
-  const digits = QUESTIONS.map((q) => {
-    const v = result.answers[q.id];
-    return typeof v === "number" && v >= 0 && v <= 4 ? String(v) : "0";
-  }).join("");
-  return `${SHARE_FORMAT_VERSION}.${digits}`;
+  return `${SHARE_FORMAT_VERSION}.${engineEncodeAnswers(AARRR_DIAGNOSTIC, result.answers)}`;
 }
 
 /**
- * Decode a share token back into answers + recomputed overall score.
+ * Decode an AARRR share token back into answers + recomputed overall score.
  * Returns null for malformed tokens. Legacy base64-JSON tokens (pre-1.1) still
  * decode for backward compatibility.
  */
@@ -682,13 +675,8 @@ export function decodeResultFromURL(token: string): {
     const version = token.slice(0, dot);
     const digits = token.slice(dot + 1);
     if (version !== SHARE_FORMAT_VERSION) return null;
-    if (digits.length !== QUESTIONS.length) return null;
-    if (!/^[0-4]+$/.test(digits)) return null;
-
-    const answers: Record<string, AnswerValue> = {};
-    QUESTIONS.forEach((q, i) => {
-      answers[q.id] = Number(digits[i]) as AnswerValue;
-    });
+    const answers = engineParseAnswerDigits(AARRR_DIAGNOSTIC, digits);
+    if (!answers) return null;
     return { answers, overallScore: overallFromAnswers(answers), completedAt: "" };
   }
 
@@ -714,35 +702,11 @@ export function decodeResultFromURL(token: string): {
   }
 }
 
-/**
- * Returns a human-readable label for an overall score.
- */
+/** Human-readable label for an overall score (delegates to the shared engine). */
 export function getScoreLabel(score: number): {
   label: string;
   description: string;
   urgency: "critical" | "needs-work" | "good" | "excellent";
 } {
-  if (score < 30)
-    return {
-      label: "Critical",
-      description: "Your growth engine has serious structural gaps.",
-      urgency: "critical",
-    };
-  if (score < 55)
-    return {
-      label: "Needs Work",
-      description: "Foundation exists but multiple stages are underperforming.",
-      urgency: "needs-work",
-    };
-  if (score < 75)
-    return {
-      label: "Good",
-      description: "You're growing but there's clear upside in your bottlenecks.",
-      urgency: "good",
-    };
-  return {
-    label: "Excellent",
-    description: "Strong growth engine — focus on compounding your strengths.",
-    urgency: "excellent",
-  };
+  return engineGetScoreLabel(score);
 }

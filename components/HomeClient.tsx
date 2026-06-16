@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import posthog from "posthog-js";
-import { ScoringResult, decodeResultFromURL, scoreSubmission } from "@/lib/scoring";
+import { type Diagnostic, type DiagnosticResult, scoreDiagnostic } from "@/lib/engine";
+import {
+  DEFAULT_DIAGNOSTIC_ID,
+  getDiagnosticOrDefault,
+  decodeShareToken,
+  listDiagnostics,
+} from "@/lib/diagnostics";
 import GrowthQuiz from "@/components/GrowthQuiz";
 import ResultsDashboard from "@/components/ResultsDashboard";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -10,38 +16,64 @@ import { useI18n } from "@/lib/i18n-context";
 
 type AppPhase = "quiz" | "results";
 
+const DIAGNOSTICS = listDiagnostics();
+
 export default function HomeClient() {
   const { t } = useI18n();
   const [phase, setPhase] = useState<AppPhase>("quiz");
-  const [result, setResult] = useState<ScoringResult | null>(null);
+  const [diagnostic, setDiagnostic] = useState<Diagnostic>(
+    getDiagnosticOrDefault(DEFAULT_DIAGNOSTIC_ID)
+  );
+  const [result, setResult] = useState<DiagnosticResult | null>(null);
   // True when the current result was opened from a shared ?r= link, not taken
-  // by this visitor. Shared views are ungated (no PII in the payload) so the
-  // growth loop works: a recipient sees the score, then takes their own audit.
+  // by this visitor. Shared views are ungated (no PII in the payload).
   const [fromShare, setFromShare] = useState(false);
 
-  // Hydrate from URL share token on load
+  // Hydrate from URL share token (?r=) or pre-select a diagnostic (?d=) on load.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("r");
     if (token) {
-      const decoded = decodeResultFromURL(token);
+      const decoded = decodeShareToken(token);
       if (decoded) {
-        const rehydrated = scoreSubmission(decoded.answers);
+        const rehydrated = scoreDiagnostic(decoded.diagnostic, decoded.answers);
+        setDiagnostic(decoded.diagnostic);
         setResult(rehydrated);
         setFromShare(true);
         setPhase("results");
-
-        // demo_used — user opened a shared result link
         try {
-          posthog.capture("demo_used", { score: rehydrated.overallScore });
+          posthog.capture("demo_used", {
+            diagnostic: decoded.diagnosticId,
+            score: rehydrated.overallScore,
+          });
         } catch {
-          // graceful degrade — PostHog may not be initialised yet on first paint
+          // graceful degrade — PostHog may not be initialised on first paint
         }
+        return;
       }
     }
+    const d = params.get("d");
+    if (d) setDiagnostic(getDiagnosticOrDefault(d));
   }, []);
 
-  function handleQuizComplete(scoringResult: ScoringResult) {
+  function handleSelectDiagnostic(id: string) {
+    const next = getDiagnosticOrDefault(id);
+    setDiagnostic(next);
+    setResult(null);
+    setFromShare(false);
+    setPhase("quiz");
+    // Reflect the choice in the URL (shareable, reload-stable) without reload.
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("d", next.id);
+      url.searchParams.delete("r");
+      window.history.replaceState({}, "", url);
+    } catch {
+      // non-fatal
+    }
+  }
+
+  function handleQuizComplete(scoringResult: DiagnosticResult) {
     setResult(scoringResult);
     setFromShare(false);
     setPhase("results");
@@ -78,9 +110,14 @@ export default function HomeClient() {
       {/* Main */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-10 md:py-16">
         {phase === "quiz" ? (
-          <GrowthQuiz onComplete={handleQuizComplete} />
+          <GrowthQuiz
+            diagnostic={diagnostic}
+            diagnostics={DIAGNOSTICS}
+            onSelectDiagnostic={handleSelectDiagnostic}
+            onComplete={handleQuizComplete}
+          />
         ) : result ? (
-          <ResultsDashboard result={result} shared={fromShare} />
+          <ResultsDashboard diagnostic={diagnostic} result={result} shared={fromShare} />
         ) : null}
       </main>
 

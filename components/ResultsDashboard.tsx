@@ -19,6 +19,8 @@ interface ResultsDashboardProps {
   result: DiagnosticResult;
   /** True when opened from a shared ?r= link — skips the email gate. */
   shared?: boolean;
+  /** True inside the embeddable widget — ungated, no shared banner. */
+  embedded?: boolean;
 }
 
 function ScoreLegend() {
@@ -131,10 +133,10 @@ function BenchmarkComparison({ diagnostic, result }: { diagnostic: Diagnostic; r
   );
 }
 
-export default function ResultsDashboard({ diagnostic, result, shared = false }: ResultsDashboardProps) {
+export default function ResultsDashboard({ diagnostic, result, shared = false, embedded = false }: ResultsDashboardProps) {
   const { t } = useI18n();
   const posthog = usePostHog();
-  const [emailUnlocked, setEmailUnlocked] = useState(shared);
+  const [emailUnlocked, setEmailUnlocked] = useState(shared || embedded);
 
   const colorByKey = new Map(diagnostic.dimensions.map((d) => [d.key, d.color]));
 
@@ -159,7 +161,7 @@ export default function ResultsDashboard({ diagnostic, result, shared = false }:
         <ScoreLegend />
       </section>
 
-      {shared && <SharedBanner />}
+      {shared && !embedded && <SharedBanner />}
 
       {!emailUnlocked ? (
         <EmailGate

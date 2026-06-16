@@ -2,6 +2,35 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v1.5.0: embeddable widget ✅
+
+**Released v1.5.0** — any site can host the audit with one `<script>` tag.
+Self-contained, no backend. See `PRD.md` (Slice 4) and `docs/EMBED.md`.
+
+### Verification (gate — all green)
+- `npm run build` → compiles + type-checks (new static route `/embed`)
+- `npm test` → **209/209** unit (+embed src/beacon/clamp helpers)
+- `npm run e2e` → **24/24** Playwright (+embed standalone/ungated + real
+  embed.js iframe injection & auto-resize + axe on /embed)
+- `npm run screenshot` → regenerated
+
+### What shipped
+- **`app/embed/page.tsx` + `components/EmbedClient.tsx`** — the audit with
+  minimal chrome, ungated, honoring `?d=` / `?r=` (and `?lang=` next slice). Safe
+  to iframe; `noindex`. Posts a height beacon to the parent for auto-resize.
+- **`public/embed.js`** — dependency-free loader: reads `data-diagnostic` /
+  `data-lang` / `data-token` / `data-height` / `data-base`, injects a responsive
+  iframe to `/embed`, resizes from height beacons **accepted only from the embed
+  origin**. Beacon carries only a type tag + integer height — no PII.
+- **`lib/embed.ts`** — pure `buildEmbedSrc` / `isHeightBeacon` / `clampEmbedHeight`
+  (unit-tested); `public/embed.js` mirrors them.
+- **`docs/EMBED.md`** — copy-paste snippet + options + how-it-works + privacy.
+
+### Decisions
+- **iframe loader** over a web component — strongest isolation, trivially
+  self-contained, no build step for the host.
+- Embed is **ungated** (no email gate) — a hosted widget should just work.
+
 ## 2026-06-16 — v1.4.0: client-side PDF export ✅
 
 **Released v1.4.0** — the full report now exports as a real **PDF**, generated

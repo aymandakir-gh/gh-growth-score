@@ -91,6 +91,7 @@ const en: TranslationDict = {
   "playbook.copied": "Copied!",
   "playbook.download": "Download .md",
   "playbook.measure": "Measure",
+  "embed.poweredBy": "Powered by Growth Health Score · growthackers.io",
 };
 
 const ar: TranslationDict = {
@@ -157,6 +158,7 @@ const ar: TranslationDict = {
   "playbook.copied": "تم النسخ!",
   "playbook.download": "تنزيل .md",
   "playbook.measure": "قِس",
+  "embed.poweredBy": "مُشغّل بواسطة Growth Health Score · growthackers.io",
 };
 
 const it: TranslationDict = {
@@ -221,6 +223,7 @@ const it: TranslationDict = {
   "playbook.copied": "Copiato!",
   "playbook.download": "Scarica .md",
   "playbook.measure": "Misura",
+  "embed.poweredBy": "Realizzato con Growth Health Score · growthackers.io",
 };
 
 const nl: TranslationDict = {
@@ -285,6 +288,7 @@ const nl: TranslationDict = {
   "playbook.copied": "Gekopieerd!",
   "playbook.download": ".md downloaden",
   "playbook.measure": "Meet",
+  "embed.poweredBy": "Mogelijk gemaakt door Growth Health Score · growthackers.io",
 };
 
 const zh: TranslationDict = {
@@ -348,6 +352,7 @@ const zh: TranslationDict = {
   "playbook.copied": "已复制！",
   "playbook.download": "下载 .md",
   "playbook.measure": "衡量",
+  "embed.poweredBy": "由 Growth Health Score 提供 · growthackers.io",
 };
 
 const es: TranslationDict = {
@@ -412,6 +417,7 @@ const es: TranslationDict = {
   "playbook.copied": "¡Copiado!",
   "playbook.download": "Descargar .md",
   "playbook.measure": "Medir",
+  "embed.poweredBy": "Con tecnología de Growth Health Score · growthackers.io",
 };
 
 const fr: TranslationDict = {
@@ -476,6 +482,7 @@ const fr: TranslationDict = {
   "playbook.copied": "Copié !",
   "playbook.download": "Télécharger .md",
   "playbook.measure": "Mesurer",
+  "embed.poweredBy": "Propulsé par Growth Health Score · growthackers.io",
 };
 
 const de: TranslationDict = {
@@ -540,6 +547,7 @@ const de: TranslationDict = {
   "playbook.copied": "Kopiert!",
   "playbook.download": ".md herunterladen",
   "playbook.measure": "Messen",
+  "embed.poweredBy": "Bereitgestellt von Growth Health Score · growthackers.io",
 };
 
 const ptBr: TranslationDict = {
@@ -604,6 +612,7 @@ const ptBr: TranslationDict = {
   "playbook.copied": "Copiado!",
   "playbook.download": "Baixar .md",
   "playbook.measure": "Medir",
+  "embed.poweredBy": "Desenvolvido com Growth Health Score · growthackers.io",
 };
 
 export const translations: Record<Locale, TranslationDict> = {

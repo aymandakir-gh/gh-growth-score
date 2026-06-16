@@ -44,4 +44,12 @@ test.describe("accessibility (axe)", () => {
     const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
     expect(results.violations).toEqual([]);
   });
+
+  test("embed surface has no axe violations", async ({ page }) => {
+    await page.goto("/embed?d=plg");
+    await page.getByRole("heading", { name: /PLG Readiness Score/i }).waitFor();
+    await freezeAnimations(page);
+    const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+    expect(results.violations).toEqual([]);
+  });
 });

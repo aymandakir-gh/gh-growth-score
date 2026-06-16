@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PostHog } from "posthog-node";
+import { leadRateLimiter, clientIp } from "@/lib/rate-limit";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/lead
@@ -71,6 +72,15 @@ async function captureLeadCaptured(
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit early (OWASP A04) — before parsing or any upstream work — so
+  // malformed-body floods are throttled too.
+  if (!leadRateLimiter.check(clientIp(req))) {
+    return NextResponse.json(
+      { ok: false, error: "Rate limit exceeded. Please try again in a minute." },
+      { status: 429 }
+    );
+  }
+
   let body: unknown;
 
   try {

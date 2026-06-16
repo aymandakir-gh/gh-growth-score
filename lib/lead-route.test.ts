@@ -10,6 +10,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
+import { leadRateLimiter } from "./rate-limit";
 
 // Dynamic import after mocking fetch
 async function importRoute() {
@@ -24,6 +25,23 @@ function makeRequest(body: unknown): NextRequest {
     body: JSON.stringify(body),
   });
 }
+
+// Same as makeRequest but with a distinct client IP (x-forwarded-for) so
+// rate-limit cases don't collide with the shared localhost bucket.
+function makeRequestFromIp(body: unknown, ip: string): NextRequest {
+  return new NextRequest("http://localhost/api/lead", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-forwarded-for": ip },
+    body: JSON.stringify(body),
+  });
+}
+
+// The route uses a module-level rate limiter shared across every test in this
+// file (all default requests share one localhost IP bucket). Reset it before
+// each case so the limit never bleeds between tests.
+beforeEach(() => {
+  leadRateLimiter.reset();
+});
 
 // ─── Body validation ──────────────────────────────────────────────────────────
 
@@ -299,5 +317,71 @@ describe("POST /api/lead — upstream proxy", () => {
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const sent = JSON.parse(init.body as string);
     expect(sent.metadata).not.toHaveProperty("company");
+  });
+});
+
+// ─── Rate limiting (OWASP A04) ─────────────────────────────────────────────────
+
+describe("POST /api/lead — rate limiting", () => {
+  beforeEach(() => {
+    vi.stubEnv("LEADS_API_URL", "");
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("allows up to 10 requests from one IP within the window", async () => {
+    const POST = await importRoute();
+    for (let i = 0; i < 10; i++) {
+      const res = await POST(
+        makeRequestFromIp({ email: "user@example.com", overallScore: 50 }, "9.9.9.1"),
+      );
+      expect(res.status).toBe(200);
+    }
+  });
+
+  it("returns 429 on the 11th request from the same IP", async () => {
+    const POST = await importRoute();
+    for (let i = 0; i < 10; i++) {
+      await POST(
+        makeRequestFromIp({ email: "user@example.com", overallScore: 50 }, "9.9.9.2"),
+      );
+    }
+    const res = await POST(
+      makeRequestFromIp({ email: "user@example.com", overallScore: 50 }, "9.9.9.2"),
+    );
+    expect(res.status).toBe(429);
+    const data = await res.json();
+    expect(data.ok).toBe(false);
+    expect(data.error).toMatch(/rate limit/i);
+  });
+
+  it("tracks limits per IP — a different IP is not affected", async () => {
+    const POST = await importRoute();
+    for (let i = 0; i < 10; i++) {
+      await POST(
+        makeRequestFromIp({ email: "user@example.com", overallScore: 50 }, "9.9.9.3"),
+      );
+    }
+    // A fresh IP still gets through.
+    const res = await POST(
+      makeRequestFromIp({ email: "user@example.com", overallScore: 50 }, "9.9.9.4"),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("rate-limits before body parsing (floods of malformed bodies are throttled)", async () => {
+    const POST = await importRoute();
+    for (let i = 0; i < 10; i++) {
+      await POST(makeRequestFromIp({ email: "user@example.com", overallScore: 50 }, "9.9.9.5"));
+    }
+    // 11th request has a malformed body, but rate limiting fires first → 429.
+    const bad = new NextRequest("http://localhost/api/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "9.9.9.5" },
+      body: "not json >>>",
+    });
+    const res = await POST(bad);
+    expect(res.status).toBe(429);
   });
 });

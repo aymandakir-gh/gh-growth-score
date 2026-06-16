@@ -389,6 +389,73 @@ describe("URL encoding round-trip", () => {
   it("returns null for invalid token", () => {
     expect(decodeResultFromURL("not-valid-base64!!!")).toBeNull();
   });
+
+  it("uses the compact v1 format: '1.' + one digit per question", () => {
+    const answers = allAnswers(3);
+    const token = encodeResultForURL(scoreSubmission(answers));
+    expect(token).toBe(`1.${"3".repeat(QUESTIONS.length)}`);
+    expect(token.length).toBe(2 + QUESTIONS.length);
+  });
+
+  it("encodes distinct per-question answers in QUESTIONS order", () => {
+    const answers: Record<string, 0 | 1 | 2 | 3 | 4> = {};
+    QUESTIONS.forEach((q, i) => {
+      answers[q.id] = (i % 5) as 0 | 1 | 2 | 3 | 4;
+    });
+    const token = encodeResultForURL(scoreSubmission(answers));
+    const decoded = decodeResultFromURL(token);
+    expect(decoded).not.toBeNull();
+    QUESTIONS.forEach((q, i) => {
+      expect(decoded!.answers[q.id]).toBe((i % 5) as 0 | 1 | 2 | 3 | 4);
+    });
+  });
+
+  it("carries NO PII — token is only the version and answer digits", () => {
+    const answers = allAnswers(2);
+    const token = encodeResultForURL(scoreSubmission(answers));
+    // The whole token must match the strict digit grammar (no emails, names, etc.)
+    expect(token).toMatch(/^1\.[0-4]+$/);
+  });
+
+  it("is URL-safe (round-trips through encode/decodeURIComponent unchanged)", () => {
+    const token = encodeResultForURL(scoreSubmission(allAnswers(4)));
+    expect(encodeURIComponent(token)).toBe(token);
+  });
+
+  it("rejects wrong digit length", () => {
+    expect(decodeResultFromURL("1.123")).toBeNull();
+    expect(decodeResultFromURL(`1.${"3".repeat(QUESTIONS.length + 1)}`)).toBeNull();
+  });
+
+  it("rejects out-of-range digits", () => {
+    expect(decodeResultFromURL(`1.${"5".repeat(QUESTIONS.length)}`)).toBeNull();
+    expect(decodeResultFromURL(`1.${"x".repeat(QUESTIONS.length)}`)).toBeNull();
+  });
+
+  it("rejects an unknown format version", () => {
+    expect(decodeResultFromURL(`9.${"3".repeat(QUESTIONS.length)}`)).toBeNull();
+  });
+
+  it("returns null for empty / non-string input", () => {
+    expect(decodeResultFromURL("")).toBeNull();
+    // @ts-expect-error — runtime guard for non-string input
+    expect(decodeResultFromURL(null)).toBeNull();
+  });
+
+  it("still decodes legacy base64-JSON tokens (backward compatible)", () => {
+    const answers = allAnswers(3);
+    const result = scoreSubmission(answers);
+    // Reconstruct a pre-1.1 token: base64(JSON{a,s,t}).
+    const legacy = Buffer.from(
+      JSON.stringify({ a: answers, s: result.overallScore, t: result.completedAt })
+    ).toString("base64");
+    const decoded = decodeResultFromURL(legacy);
+    expect(decoded).not.toBeNull();
+    expect(decoded!.overallScore).toBe(result.overallScore);
+    for (const q of QUESTIONS) {
+      expect(decoded!.answers[q.id]).toBe(answers[q.id]);
+    }
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

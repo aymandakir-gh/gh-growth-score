@@ -630,42 +630,84 @@ export function scoreSubmission(
   };
 }
 
-/**
- * Encode a ScoringResult into a URL-safe string for sharing.
- * Format: base64(JSON of answers + overallScore)
- */
-export function encodeResultForURL(result: ScoringResult): string {
-  const payload = {
-    a: result.answers,
-    s: result.overallScore,
-    t: result.completedAt,
-  };
-  if (typeof window !== "undefined") {
-    return btoa(JSON.stringify(payload));
-  }
-  return Buffer.from(JSON.stringify(payload)).toString("base64");
+// Current share-token format version. Bump only if QUESTIONS order changes.
+export const SHARE_FORMAT_VERSION = "1";
+
+/** Recompute the weighted overall score directly from raw answers. */
+function overallFromAnswers(answers: Record<string, AnswerValue>): number {
+  const stageScores = {
+    acquisition: computeStageScore("acquisition", answers),
+    activation: computeStageScore("activation", answers),
+    retention: computeStageScore("retention", answers),
+    revenue: computeStageScore("revenue", answers),
+    referral: computeStageScore("referral", answers),
+  } as Record<Stage, number>;
+  return computeOverallScore(stageScores);
 }
 
 /**
- * Decode a shared URL token back into answers + metadata.
+ * Encode a ScoringResult into a compact, URL-safe share token.
+ *
+ * Format (v1):  "1." + one digit (0–4) per question in fixed QUESTIONS order.
+ *   e.g.  "1.342013402230114"
+ *
+ * The 15 answer values are the ENTIRE payload — no email, name, company,
+ * timestamp, or free text. It is not PII. Opening the link recomputes the exact
+ * score/breakdown via scoreSubmission(). Digits + "." are URL-safe and the
+ * function is pure string work, so it also runs on the Edge runtime (OG route).
+ */
+export function encodeResultForURL(result: ScoringResult): string {
+  const digits = QUESTIONS.map((q) => {
+    const v = result.answers[q.id];
+    return typeof v === "number" && v >= 0 && v <= 4 ? String(v) : "0";
+  }).join("");
+  return `${SHARE_FORMAT_VERSION}.${digits}`;
+}
+
+/**
+ * Decode a share token back into answers + recomputed overall score.
+ * Returns null for malformed tokens. Legacy base64-JSON tokens (pre-1.1) still
+ * decode for backward compatibility.
  */
 export function decodeResultFromURL(token: string): {
   answers: Record<string, AnswerValue>;
   overallScore: number;
   completedAt: string;
 } | null {
+  if (typeof token !== "string" || token.length === 0) return null;
+
+  // v1 compact format: "1.<15 digits 0–4>"
+  const dot = token.indexOf(".");
+  if (dot !== -1) {
+    const version = token.slice(0, dot);
+    const digits = token.slice(dot + 1);
+    if (version !== SHARE_FORMAT_VERSION) return null;
+    if (digits.length !== QUESTIONS.length) return null;
+    if (!/^[0-4]+$/.test(digits)) return null;
+
+    const answers: Record<string, AnswerValue> = {};
+    QUESTIONS.forEach((q, i) => {
+      answers[q.id] = Number(digits[i]) as AnswerValue;
+    });
+    return { answers, overallScore: overallFromAnswers(answers), completedAt: "" };
+  }
+
+  // Legacy base64-JSON tokens (pre-1.1). `atob` is global in browsers, the
+  // Edge runtime, and Node 16+ — so we avoid Buffer entirely (keeps scoring.ts
+  // importable from the Edge OG route).
   try {
-    let decoded: string;
-    if (typeof window !== "undefined") {
-      decoded = atob(token);
-    } else {
-      decoded = Buffer.from(token, "base64").toString("utf-8");
-    }
+    const decoded = atob(token);
     const parsed = JSON.parse(decoded);
+    if (!parsed || typeof parsed !== "object" || typeof parsed.a !== "object") {
+      return null;
+    }
     return {
-      answers: parsed.a,
-      overallScore: parsed.s,
-      completedAt: parsed.t,
+      answers: parsed.a as Record<string, AnswerValue>,
+      overallScore:
+        typeof parsed.s === "number"
+          ? parsed.s
+          : overallFromAnswers(parsed.a as Record<string, AnswerValue>),
+      completedAt: typeof parsed.t === "string" ? parsed.t : "",
     };
   } catch {
     return null;

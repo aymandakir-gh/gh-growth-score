@@ -1,3 +1,74 @@
+# PLAN — gh-growth-score
+
+> **v1.1.0 — the growth loop (2026-06-16).** Make the tool market itself, while
+> staying **zero-backend & privacy-first** (no DB, no server-stored results, no
+> PII leaving the browser). Plan below; the original v1.0 gap analysis follows.
+
+## v1.1.0 plan
+
+### 1. Compact, URL-safe result codec (no PII)
+`encodeResultForURL` currently does `btoa(JSON.stringify({a,s,t}))` — not
+URL-safe (`+ / =`), bulky, and not edge-safe. Replace with a versioned digit
+format:
+
+```
+token = "1." + <15 digits>      e.g.  "1.342013402230114"
+```
+
+- The 15 digits are the answers (0–4) in fixed `QUESTIONS` order. That is the
+  **entire payload** — no email/name/company, no timestamp, no free text. Not
+  PII. Opening the link recomputes the exact score/breakdown via
+  `scoreSubmission` (the scoring engine is the single source of truth).
+- Decode validates version + length + digit range; invalid → `null`. Legacy
+  base64-JSON tokens still decode (backward compatible). Pure string ops →
+  works on the Edge runtime (the OG route needs that).
+- Documented in `datasets/` and the README.
+
+### 2. Ungate shared views + dynamic OG metadata
+Today a `?r=` recipient still hits the email gate before seeing anything — that
+kills the loop. `app/page.tsx` becomes a **server component** with
+`generateMetadata({ searchParams })` that, for a shared token, sets a dynamic
+`og:image` (→ the OG route) and a score-aware title; the interactive quiz moves
+to `components/HomeClient.tsx`. Shared views render the **full breakdown with no
+gate** (payload has no PII), plus a "take your own audit" CTA — that is the loop.
+`metadataBase` set from `NEXT_PUBLIC_SITE_URL` (fallback to the prod URL).
+
+### 3. Dynamic OG / share-card image route
+`app/api/og/route.tsx` (Edge, `next/og` `ImageResponse`) renders a branded card
+(score, 5 AARRR mini-bars, label) from the token. `next/og` can't be imported in
+vitest (needs Next's bundler), so all data logic lives in a pure, unit-tested
+`lib/share-model.ts` (`buildShareModel(token)`); the route is a thin JSX layer.
+Image validity is checked end-to-end (Playwright fetch against `next start`:
+200 + `image/png` + non-empty). A `?v=report` variant is the downloadable image.
+
+### 4. Downloadable PNG report
+A client-side "Download report" button fetches the OG `?v=report` image and
+saves it as a PNG (Blob + anchor). Stateless render of the URL token — no DB, no
+PII. Exercised end-to-end.
+
+### 5. Per-stage recommendations + industry benchmark
+- `datasets/benchmarks.md` — a documented median-per-stage table. No licensed
+  source is bundled, so the figures are **honestly synthesized placeholders**,
+  clearly labelled with provenance + how to replace them.
+- `lib/benchmarks.ts` — the table + `compareToBenchmark(stageScores)` ("your
+  score vs median", delta, above/below). Pure, unit-tested.
+- `lib/recommendations.ts` — `getStageRecommendation(stage, score)` returning
+  tailored advice per score band (critical / needs-work / good / strong). Pure,
+  unit-tested.
+- Rendered in `ResultsDashboard` (benchmark deltas + tailored recommendations).
+
+### 6. Quality bar: axe-clean a11y + Lighthouse ≥90
+- Playwright + `@axe-core/playwright` scan of the quiz + results; fix to clean.
+- Lighthouse against `next start`; commit the report under `docs/lighthouse/`
+  and report the **real** numbers (target ≥90 perf/a11y/best-practices/SEO).
+
+### Verification (every slice)
+`npm run build` · `npm test` (full suite) · Playwright e2e (share round-trip +
+OG image + export + axe) · re-run `npm run screenshot`. CI stays green on main.
+Deploy stays one command (`npx vercel --prod`); not run here (no VERCEL_TOKEN).
+
+---
+
 # PLAN — gh-growth-score → v1.0.0
 
 _Gap analysis: current state vs. the v1.0 launch goal. Written 2026-06-16._

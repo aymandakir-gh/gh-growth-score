@@ -1,4 +1,6 @@
 /**
+ * @vitest-environment jsdom
+ *
  * W6·QA run 12 — LanguageSelector.test.tsx
  *
  * Previous test file tested the OLD broken prop-based API (current/onChange/label props +
@@ -8,7 +10,9 @@
  * Coverage: initial render, open/close, locale selection, RTL (AR),
  * keyboard navigation, outside-click, edge cases (all 9 locales).
  *
- * Environment: jsdom (vitest.config.ts environmentMatchGlobs for *.test.tsx)
+ * Environment: jsdom — set via the @vitest-environment docblock above.
+ * (Vitest 4 removed config-level environmentMatchGlobs, so component test
+ *  files opt into jsdom per-file.)
  */
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";

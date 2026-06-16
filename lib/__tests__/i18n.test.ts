@@ -1,12 +1,26 @@
 import { describe, it, expect } from "vitest";
 import {
   LANGUAGES,
+  LOCALE_LABELS,
+  RTL_LOCALES,
   translations,
   getLangDir,
   isValidLang,
   type LangCode,
-  type UITranslations,
+  type Locale,
 } from "../i18n";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// These tests validate the REAL i18n API in lib/i18n.ts:
+//   - 9 P1 locales: en, ar, it, nl, zh, es, fr, de, pt-br
+//   - translations are FLAT dot-keyed dictionaries (Record<Locale, Record<string,string>>)
+//     consumed via t("nav.title") — not a nested object.
+// (The previous version of this file tested an aspirational nested `UITranslations`
+//  shape with codes "zh-CN"/"pt-BR" that this codebase never shipped. Rewritten to
+//  match the live implementation, mirroring the W6 LanguageSelector test rewrite.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ALL_CODES: Locale[] = ["en", "ar", "it", "nl", "zh", "es", "fr", "de", "pt-br"];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LANGUAGES array
@@ -17,21 +31,15 @@ describe("LANGUAGES", () => {
     expect(LANGUAGES).toHaveLength(9);
   });
 
-  it("includes English as first entry", () => {
+  it("includes English as the first entry", () => {
     expect(LANGUAGES[0].code).toBe("en");
   });
 
   it("includes all required P1 language codes", () => {
     const codes = LANGUAGES.map((l) => l.code);
-    expect(codes).toContain("en");
-    expect(codes).toContain("ar");
-    expect(codes).toContain("it");
-    expect(codes).toContain("nl");
-    expect(codes).toContain("zh-CN");
-    expect(codes).toContain("es");
-    expect(codes).toContain("fr");
-    expect(codes).toContain("de");
-    expect(codes).toContain("pt-BR");
+    for (const code of ALL_CODES) {
+      expect(codes).toContain(code);
+    }
   });
 
   it("every entry has a non-empty label and flag", () => {
@@ -55,6 +63,12 @@ describe("LANGUAGES", () => {
     const codes = LANGUAGES.map((l) => l.code);
     expect(new Set(codes).size).toBe(codes.length);
   });
+
+  it("every code has a matching LOCALE_LABELS entry", () => {
+    for (const lang of LANGUAGES) {
+      expect(LOCALE_LABELS[lang.code]).toBe(lang.label);
+    }
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -71,10 +85,14 @@ describe("getLangDir", () => {
   });
 
   it("returns 'ltr' for all non-Arabic P1 languages", () => {
-    const ltrCodes: LangCode[] = ["en", "it", "nl", "zh-CN", "es", "fr", "de", "pt-BR"];
+    const ltrCodes: LangCode[] = ["en", "it", "nl", "zh", "es", "fr", "de", "pt-br"];
     for (const code of ltrCodes) {
       expect(getLangDir(code)).toBe("ltr");
     }
+  });
+
+  it("only Arabic is registered as an RTL locale", () => {
+    expect(RTL_LOCALES).toEqual(["ar"]);
   });
 });
 
@@ -84,8 +102,7 @@ describe("getLangDir", () => {
 
 describe("isValidLang", () => {
   it("returns true for all P1 language codes", () => {
-    const validCodes = ["en", "ar", "it", "nl", "zh-CN", "es", "fr", "de", "pt-BR"];
-    for (const code of validCodes) {
+    for (const code of ALL_CODES) {
       expect(isValidLang(code)).toBe(true);
     }
   });
@@ -98,17 +115,17 @@ describe("isValidLang", () => {
     expect(isValidLang("")).toBe(false);
   });
 
-  it("returns false for a partial match (case sensitivity)", () => {
+  it("returns false for a case-mismatched code", () => {
     expect(isValidLang("EN")).toBe(false);
     expect(isValidLang("AR")).toBe(false);
-    expect(isValidLang("ZH-CN")).toBe(false);
+    expect(isValidLang("PT-BR")).toBe(false);
   });
 
-  it("returns false for a SQL injection-style string", () => {
+  it("returns false for a SQL-injection-style string", () => {
     expect(isValidLang("'; DROP TABLE --")).toBe(false);
   });
 
-  it("returns false for a script tag injection attempt", () => {
+  it("returns false for a script-tag injection attempt", () => {
     expect(isValidLang('<script>alert("xss")</script>')).toBe(false);
   });
 
@@ -117,7 +134,13 @@ describe("isValidLang", () => {
     expect(isValidLang("undefined")).toBe(false);
   });
 
-  it("returns false for P2 codes not yet in P1 set", () => {
+  it("returns false for prototype keys (no prototype pollution leak)", () => {
+    expect(isValidLang("toString")).toBe(false);
+    expect(isValidLang("constructor")).toBe(false);
+    expect(isValidLang("__proto__")).toBe(false);
+  });
+
+  it("returns false for P2 codes not yet in the P1 set", () => {
     expect(isValidLang("ja")).toBe(false);
     expect(isValidLang("ko")).toBe(false);
     expect(isValidLang("zh-TW")).toBe(false);
@@ -125,69 +148,52 @@ describe("isValidLang", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// translations — shape completeness
+// translations — flat-key shape completeness
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("translations", () => {
-  const allCodes: LangCode[] = ["en", "ar", "it", "nl", "zh-CN", "es", "fr", "de", "pt-BR"];
-
   it("has a translation entry for every P1 language code", () => {
-    for (const code of allCodes) {
+    for (const code of ALL_CODES) {
       expect(translations[code]).toBeDefined();
     }
   });
 
-  it("every translation has the required UITranslations shape", () => {
-    for (const code of allCodes) {
-      const t: UITranslations = translations[code];
-      // nav
-      expect(typeof t.nav.title).toBe("string");
-      expect(t.nav.title.length).toBeGreaterThan(0);
-      expect(typeof t.nav.openSource).toBe("string");
-      expect(t.nav.openSource.length).toBeGreaterThan(0);
-      // footer
-      expect(typeof t.footer.openSource).toBe("string");
-      expect(typeof t.footer.github).toBe("string");
-      expect(typeof t.footer.privacy).toBe("string");
-      expect(typeof t.footer.license).toBe("string");
-      // selectLanguage
-      expect(typeof t.selectLanguage).toBe("string");
-      expect(t.selectLanguage.length).toBeGreaterThan(0);
+  it("every locale exposes the nav.title and nav.openSource keys", () => {
+    for (const code of ALL_CODES) {
+      expect(typeof translations[code]["nav.title"]).toBe("string");
+      expect(translations[code]["nav.title"].length).toBeGreaterThan(0);
+      expect(typeof translations[code]["nav.openSource"]).toBe("string");
+      expect(translations[code]["nav.openSource"].length).toBeGreaterThan(0);
     }
   });
 
-  it("English translation matches expected values", () => {
-    expect(translations.en.nav.title).toBe("Growth Health Score");
-    expect(translations.en.footer.github).toBe("GitHub");
-    expect(translations.en.selectLanguage).toBe("Select language");
+  it("English translation matches expected baseline values", () => {
+    expect(translations.en["nav.title"]).toBe("Growth Health Score");
+    expect(translations.en["nav.openSource"]).toBe("Open source · MIT");
   });
 
-  it("Arabic translation is non-empty and different from English", () => {
-    expect(translations.ar.nav.title).not.toBe(translations.en.nav.title);
-    expect(translations.ar.selectLanguage).not.toBe(translations.en.selectLanguage);
+  it("Arabic translation is localized and differs from English", () => {
+    expect(translations.ar["nav.title"]).not.toBe(translations.en["nav.title"]);
   });
 
-  it("no translation key is accidentally undefined or empty string", () => {
-    for (const code of allCodes) {
-      const t = translations[code];
-      const flat = [
-        t.nav.title,
-        t.nav.openSource,
-        t.footer.openSource,
-        t.footer.github,
-        t.footer.privacy,
-        t.footer.license,
-        t.selectLanguage,
-      ];
-      for (const val of flat) {
-        expect(val).toBeDefined();
-        expect(val.length).toBeGreaterThan(0);
+  it("every locale has the exact same key set as English (no missing/orphan keys)", () => {
+    const enKeys = Object.keys(translations.en).sort();
+    for (const code of ALL_CODES) {
+      const keys = Object.keys(translations[code]).sort();
+      expect(keys).toEqual(enKeys);
+    }
+  });
+
+  it("no translation value is undefined or an empty string", () => {
+    for (const code of ALL_CODES) {
+      for (const value of Object.values(translations[code])) {
+        expect(value).toBeDefined();
+        expect(value.length).toBeGreaterThan(0);
       }
     }
   });
 
   it("translations count matches LANGUAGES count (no orphaned entries)", () => {
-    const translationKeys = Object.keys(translations);
-    expect(translationKeys).toHaveLength(LANGUAGES.length);
+    expect(Object.keys(translations)).toHaveLength(LANGUAGES.length);
   });
 });

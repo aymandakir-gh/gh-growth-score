@@ -15,6 +15,8 @@ import { scoreDiagnostic, getScoreLabel } from "./engine";
 import { decodeShareToken, getDiagnosticOrDefault } from "./diagnostics";
 import {
   compareDiagnosticToBenchmark,
+  DEFAULT_INDUSTRY,
+  isValidIndustry,
   type BenchmarkStatus,
 } from "./benchmarks";
 
@@ -52,6 +54,7 @@ export interface ShareModel {
   diagnosticName: string;
   diagnosticShortName: string;
   diagnosticTagline: string;
+  industry: string;
   overallScore: number;
   overallLabel: string; // e.g. "Good"
   overallMedian: number;
@@ -62,18 +65,19 @@ export interface ShareModel {
   experiments: { title: string }[]; // top experiment titles
 }
 
-function genericModel(diagnosticId?: string): ShareModel {
+function genericModel(diagnosticId?: string, industry: string = DEFAULT_INDUSTRY): ShareModel {
   const diagnostic = getDiagnosticOrDefault(diagnosticId);
   const zeroScores = Object.fromEntries(
     diagnostic.dimensions.map((d) => [d.key, 0])
   );
-  const cmp = compareDiagnosticToBenchmark(diagnostic, zeroScores);
+  const cmp = compareDiagnosticToBenchmark(diagnostic, zeroScores, industry);
   return {
     valid: false,
     diagnosticId: diagnostic.id,
     diagnosticName: diagnostic.name,
     diagnosticShortName: diagnostic.shortName,
     diagnosticTagline: diagnostic.tagline,
+    industry: cmp.industry,
     overallScore: 0,
     overallLabel: "",
     overallMedian: cmp.overallMedian,
@@ -96,9 +100,13 @@ function genericModel(diagnosticId?: string): ShareModel {
  * Returns a generic (valid:false) model for a missing/invalid token so callers
  * can always render something.
  */
-export function buildShareModel(token: string | null | undefined): ShareModel {
+export function buildShareModel(
+  token: string | null | undefined,
+  industry: string = DEFAULT_INDUSTRY
+): ShareModel {
+  const resolvedIndustry = isValidIndustry(industry) ? industry : DEFAULT_INDUSTRY;
   const decoded = token ? decodeShareToken(token) : null;
-  if (!decoded) return genericModel();
+  if (!decoded) return genericModel(undefined, resolvedIndustry);
 
   const { diagnostic, answers } = decoded;
   const result = scoreDiagnostic(diagnostic, answers);
@@ -110,7 +118,7 @@ export function buildShareModel(token: string | null | undefined): ShareModel {
     {} as Record<string, number>
   );
 
-  const cmp = compareDiagnosticToBenchmark(diagnostic, dimScores);
+  const cmp = compareDiagnosticToBenchmark(diagnostic, dimScores, resolvedIndustry);
   const bottleneckSet = new Set(result.bottlenecks);
   const colorByKey = new Map(diagnostic.dimensions.map((d) => [d.key, d.color]));
 
@@ -126,6 +134,7 @@ export function buildShareModel(token: string | null | undefined): ShareModel {
     diagnosticName: diagnostic.name,
     diagnosticShortName: diagnostic.shortName,
     diagnosticTagline: diagnostic.tagline,
+    industry: cmp.industry,
     overallScore: result.overallScore,
     overallLabel: getScoreLabel(result.overallScore).label,
     overallMedian: cmp.overallMedian,

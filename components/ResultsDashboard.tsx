@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePostHog } from "posthog-js/react";
 import { type Diagnostic, type DiagnosticResult } from "@/lib/engine";
-import { compareDiagnosticToBenchmark } from "@/lib/benchmarks";
+import {
+  compareDiagnosticToBenchmark,
+  INDUSTRIES,
+  DEFAULT_INDUSTRY,
+  isValidIndustry,
+} from "@/lib/benchmarks";
 import { getDimensionRecommendation } from "@/lib/recommendations";
 import ScoreGauge from "./ScoreGauge";
 import StageScoreCard from "./StageScoreCard";
@@ -65,7 +70,17 @@ function SharedBanner() {
   );
 }
 
-function BenchmarkComparison({ diagnostic, result }: { diagnostic: Diagnostic; result: DiagnosticResult }) {
+function BenchmarkComparison({
+  diagnostic,
+  result,
+  industry,
+  onIndustryChange,
+}: {
+  diagnostic: Diagnostic;
+  result: DiagnosticResult;
+  industry: string;
+  onIndustryChange: (id: string) => void;
+}) {
   const { t } = useI18n();
   const dimScores = result.dimensionResults.reduce(
     (acc, s) => {
@@ -74,7 +89,7 @@ function BenchmarkComparison({ diagnostic, result }: { diagnostic: Diagnostic; r
     },
     {} as Record<string, number>
   );
-  const cmp = compareDiagnosticToBenchmark(diagnostic, dimScores);
+  const cmp = compareDiagnosticToBenchmark(diagnostic, dimScores, industry);
 
   function deltaLabel(delta: number) {
     if (delta > 0) return `+${delta}`;
@@ -88,9 +103,28 @@ function BenchmarkComparison({ diagnostic, result }: { diagnostic: Diagnostic; r
 
   return (
     <section aria-labelledby="benchmark-heading">
-      <h2 id="benchmark-heading" className="text-lg sm:text-xl font-bold text-white mb-1">
-        {t("results.compare.title")}
-      </h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1">
+        <h2 id="benchmark-heading" className="text-lg sm:text-xl font-bold text-white">
+          {t("results.compare.title")}
+        </h2>
+        <div className="flex items-center gap-2">
+          <label htmlFor="industry-select" className="text-xs text-slate-400">
+            {t("results.compare.industry")}
+          </label>
+          <select
+            id="industry-select"
+            value={industry}
+            onChange={(e) => onIndustryChange(e.target.value)}
+            className="text-xs rounded-md bg-slate-900 border border-slate-700 text-slate-200 px-2 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            {INDUSTRIES.map((ind) => (
+              <option key={ind.id} value={ind.id}>
+                {ind.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <p className="text-sm text-slate-400 mb-4">
         Your score vs. the typical median per stage.{" "}
         <span className="text-slate-400">
@@ -139,6 +173,25 @@ export default function ResultsDashboard({ diagnostic, result, shared = false, e
   const { t } = useI18n();
   const posthog = usePostHog();
   const [emailUnlocked, setEmailUnlocked] = useState(shared || embedded);
+  const [industry, setIndustry] = useState<string>(DEFAULT_INDUSTRY);
+
+  // Apply ?industry= deep-link on mount (non-PII view state, like ?lang=).
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("industry");
+    if (fromUrl && isValidIndustry(fromUrl)) setIndustry(fromUrl);
+  }, []);
+
+  function handleIndustryChange(id: string) {
+    setIndustry(id);
+    try {
+      const url = new URL(window.location.href);
+      if (id === DEFAULT_INDUSTRY) url.searchParams.delete("industry");
+      else url.searchParams.set("industry", id);
+      window.history.replaceState({}, "", url);
+    } catch {
+      // non-fatal
+    }
+  }
 
   const colorByKey = new Map(diagnostic.dimensions.map((d) => [d.key, d.color]));
 
@@ -193,7 +246,12 @@ export default function ResultsDashboard({ diagnostic, result, shared = false, e
             </div>
           </section>
 
-          <BenchmarkComparison diagnostic={diagnostic} result={result} />
+          <BenchmarkComparison
+            diagnostic={diagnostic}
+            result={result}
+            industry={industry}
+            onIndustryChange={handleIndustryChange}
+          />
 
           <section
             className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 sm:p-5"
@@ -255,7 +313,7 @@ export default function ResultsDashboard({ diagnostic, result, shared = false, e
 
           <PlaybookSection diagnostic={diagnostic} result={result} />
 
-          <ShareCard diagnostic={diagnostic} result={result} />
+          <ShareCard diagnostic={diagnostic} result={result} industry={industry} />
 
           <section className="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-5 sm:p-6 text-center">
             <p className="text-slate-400 text-sm leading-relaxed">

@@ -2,6 +2,34 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v1.7.0: per-industry benchmark depth ✅
+
+**Released v1.7.0** — "you vs median" is now per-industry × per-dimension across
+both diagnostics, with an in-results industry selector. See `PRD.md` (Slice 6).
+
+### Verification (gate — all green)
+- `npm run build` → compiles + type-checks
+- `npm test` → **223/223** unit (+depth: table integrity, default-parity,
+  industry-aware comparison)
+- `npm run e2e` → **33/33** Playwright (+industry switch updates median & URL,
+  `?industry=` deep-link, OG honors `?industry=`)
+- `npm run screenshot` → regenerated
+
+### What shipped
+- **`BENCHMARKS_BY_INDUSTRY`** — `aarrr` + `plg` × {All, B2B SaaS, PLG SaaS,
+  Marketplace, Fintech} × dimensions. `all` == the v1 baseline (parity-enforced).
+- **`getBenchmarks(id, industry)`** + industry-aware
+  `compareDiagnosticToBenchmark(diagnostic, scores, industry)` (default `all`).
+- **Industry selector** on results (`<select>`, labelled) — live "you vs median",
+  reflected in `?industry=` (deep-linkable). Flows into the PNG (`/api/og
+  ?industry=`) and the PDF (`buildReportPdf(..., industry)`).
+- **`datasets/benchmarks.md`** — documented per-industry tables + honest
+  synthesized/labelled provenance.
+
+### Decisions
+- `industry` is non-PII view state (URL param), never in the share token.
+- The `all` baseline stays the canonical default so v1 behavior is unchanged.
+
 ## 2026-06-16 — v1.6.0: localization via ?lang= + AR RTL ✅
 
 **Released v1.6.0** — UI + results in **9 languages**, selected by `?lang=` URL

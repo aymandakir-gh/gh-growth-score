@@ -355,7 +355,8 @@ export function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("r");
   const variant = searchParams.get("v");
-  const model = buildShareModel(token);
+  const industry = searchParams.get("industry") ?? undefined;
+  const model = buildShareModel(token, industry);
 
   const isReport = variant === "report";
   const element = isReport ? ReportCard(model) : SocialCard(model);

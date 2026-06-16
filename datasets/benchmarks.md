@@ -58,5 +58,48 @@ synthesized-placeholder caveat as above. Lives in `PLG_BENCHMARKS`
 **Overall PLG median ≈ 42** (weighted: TTV 25% · Self-Serve 25% · PQL 15% ·
 Virality 15% · Expansion 20%).
 
-> Slice 6 (v1.7.0) extends both tables to **per-industry × per-dimension**
-> medians; the values above become the default ("All industries") baseline.
+> The tables above are the default **"All industries"** baseline. Per-industry
+> depth is documented below.
+
+## Per-industry × per-dimension medians
+
+The results screen has an **industry selector** that re-runs "you vs median"
+against an industry-specific table for **both** diagnostics, and the selection
+flows into the PNG/PDF report (`?industry=`). Tables live in
+`BENCHMARKS_BY_INDUSTRY` (`lib/benchmarks.ts`).
+
+### ⚠️ Same honest caveat, more granular
+
+These per-industry numbers are **synthesized, directional variations** on the
+baseline — they encode the *shape* commonly described in public writing (e.g.
+fintech retains/monetizes higher but refers less; PLG SaaS has faster
+time-to-value and more virality; marketplaces acquire and refer well but retain
+harder). They are **not** licensed per-industry benchmark data. The `all` row is
+the canonical baseline and equals the v1 medians exactly (enforced by a parity
+test). Replace any cell with rights-cleared data and drop the estimate labelling
+for that diagnostic.
+
+Industries: **All · B2B SaaS · PLG SaaS · Marketplace · Fintech**.
+
+### AARRR (median 0–100)
+
+| Industry | Acquisition | Activation | Retention | Revenue | Referral |
+|---|--:|--:|--:|--:|--:|
+| All (baseline) | 52 | 45 | 50 | 48 | 36 |
+| B2B SaaS | 50 | 47 | 55 | 52 | 33 |
+| PLG SaaS | 55 | 52 | 48 | 45 | 44 |
+| Marketplace | 58 | 44 | 42 | 46 | 48 |
+| Fintech | 48 | 46 | 58 | 55 | 30 |
+
+### PLG Readiness (median 0–100)
+
+| Industry | Time-to-Value | Self-Serve | PQL | Virality | Expansion |
+|---|--:|--:|--:|--:|--:|
+| All (baseline) | 42 | 48 | 38 | 34 | 46 |
+| B2B SaaS | 40 | 44 | 44 | 30 | 50 |
+| PLG SaaS | 52 | 56 | 42 | 44 | 48 |
+| Marketplace | 46 | 50 | 34 | 50 | 40 |
+| Fintech | 44 | 46 | 40 | 28 | 52 |
+
+_Every industry × dimension cell is present and within 0–100, and the `all` row
+matches the v1 baseline — both enforced by `lib/benchmarks-depth.test.ts`._

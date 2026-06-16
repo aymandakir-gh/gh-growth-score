@@ -8,9 +8,11 @@ import { useI18n } from "@/lib/i18n-context";
 interface ShareCardProps {
   diagnostic: Diagnostic;
   result: DiagnosticResult;
+  /** Selected benchmark industry — flows into the PNG + PDF report. */
+  industry?: string;
 }
 
-export default function ShareCard({ diagnostic, result }: ShareCardProps) {
+export default function ShareCard({ diagnostic, result, industry }: ShareCardProps) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -28,13 +30,14 @@ export default function ShareCard({ diagnostic, result }: ShareCardProps) {
     diagnostic.id === "aarrr" ? "growth-health-score" : `${diagnostic.slug}-readiness-score`;
 
   const labelByKey = new Map(diagnostic.dimensions.map((d) => [d.key, d.label]));
+  const industryParam = industry && industry !== "all" ? `&industry=${encodeURIComponent(industry)}` : "";
 
   // Download the branded report PNG. Stateless render of the URL token by the
   // /api/og route (no DB, no PII) — fetched client-side and saved as a file.
   async function downloadReport() {
     setDownloading(true);
     try {
-      const res = await fetch(`/api/og?r=${encodedToken}&v=report`);
+      const res = await fetch(`/api/og?r=${encodedToken}&v=report${industryParam}`);
       if (!res.ok) throw new Error(`status ${res.status}`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -58,7 +61,7 @@ export default function ShareCard({ diagnostic, result }: ShareCardProps) {
     setPdfBusy(true);
     try {
       const { buildReportPdf } = await import("@/lib/pdf-report");
-      const bytes = buildReportPdf(diagnostic, result);
+      const bytes = buildReportPdf(diagnostic, result, industry);
       const blob = new Blob([bytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

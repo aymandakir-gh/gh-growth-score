@@ -45,7 +45,8 @@ function deltaText(delta: number): string {
 /** Build the full report PDF for a result. Returns raw PDF bytes (ArrayBuffer). */
 export function buildReportPdf(
   diagnostic: Diagnostic,
-  result: DiagnosticResult
+  result: DiagnosticResult,
+  industry?: string
 ): ArrayBuffer {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -69,7 +70,7 @@ export function buildReportPdf(
     }
   };
 
-  const cmp = compareDiagnosticToBenchmark(diagnostic, dimScores(result));
+  const cmp = compareDiagnosticToBenchmark(diagnostic, dimScores(result), industry);
   const label = getScoreLabel(result.overallScore).label;
   const colorByKey = new Map(diagnostic.dimensions.map((d) => [d.key, d.color]));
 

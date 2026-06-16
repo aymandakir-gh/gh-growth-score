@@ -101,6 +101,7 @@ const en: TranslationDict = {
   "results.shared.cta": "Take the free audit →",
   "share.title": "Share your score",
   "share.desc": "Your results are encoded in the URL — no account needed to share.",
+  "results.compare.industry": "Industry",
 };
 
 const ar: TranslationDict = {
@@ -177,6 +178,7 @@ const ar: TranslationDict = {
   "results.shared.cta": "ابدأ التدقيق المجاني →",
   "share.title": "شارك نتيجتك",
   "share.desc": "نتائجك مُرمَّزة في الرابط — لا حاجة لحساب للمشاركة.",
+  "results.compare.industry": "الصناعة",
 };
 
 const it: TranslationDict = {
@@ -251,6 +253,7 @@ const it: TranslationDict = {
   "results.shared.cta": "Fai l'audit gratuito →",
   "share.title": "Condividi il tuo punteggio",
   "share.desc": "I tuoi risultati sono codificati nell'URL — nessun account necessario.",
+  "results.compare.industry": "Settore",
 };
 
 const nl: TranslationDict = {
@@ -325,6 +328,7 @@ const nl: TranslationDict = {
   "results.shared.cta": "Doe de gratis audit →",
   "share.title": "Deel je score",
   "share.desc": "Je resultaten staan in de URL — geen account nodig om te delen.",
+  "results.compare.industry": "Sector",
 };
 
 const zh: TranslationDict = {
@@ -398,6 +402,7 @@ const zh: TranslationDict = {
   "results.shared.cta": "免费做测评 →",
   "share.title": "分享你的分数",
   "share.desc": "你的结果已编码在网址中——无需账户即可分享。",
+  "results.compare.industry": "行业",
 };
 
 const es: TranslationDict = {
@@ -472,6 +477,7 @@ const es: TranslationDict = {
   "results.shared.cta": "Haz la auditoría gratis →",
   "share.title": "Comparte tu puntuación",
   "share.desc": "Tus resultados están codificados en la URL — no necesitas cuenta para compartir.",
+  "results.compare.industry": "Sector",
 };
 
 const fr: TranslationDict = {
@@ -546,6 +552,7 @@ const fr: TranslationDict = {
   "results.shared.cta": "Faites l'audit gratuit →",
   "share.title": "Partagez votre score",
   "share.desc": "Vos résultats sont encodés dans l'URL — aucun compte requis pour partager.",
+  "results.compare.industry": "Secteur",
 };
 
 const de: TranslationDict = {
@@ -620,6 +627,7 @@ const de: TranslationDict = {
   "results.shared.cta": "Kostenlosen Audit starten →",
   "share.title": "Teilen Sie Ihr Ergebnis",
   "share.desc": "Ihre Ergebnisse sind in der URL kodiert — kein Konto zum Teilen nötig.",
+  "results.compare.industry": "Branche",
 };
 
 const ptBr: TranslationDict = {
@@ -694,6 +702,7 @@ const ptBr: TranslationDict = {
   "results.shared.cta": "Faça a auditoria grátis →",
   "share.title": "Compartilhe sua pontuação",
   "share.desc": "Seus resultados estão codificados na URL — não precisa de conta para compartilhar.",
+  "results.compare.industry": "Setor",
 };
 
 export const translations: Record<Locale, TranslationDict> = {

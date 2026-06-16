@@ -3,7 +3,13 @@ import "./globals.css";
 import I18nWrapper from "@/components/I18nWrapper";
 import { PostHogProvider } from "@/components/PostHogProvider";
 
+// Absolute base for OG/Twitter image URLs. Override per deployment with
+// NEXT_PUBLIC_SITE_URL; falls back to the canonical production host.
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://growth-score.growthackers.io";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Growth Health Score — AARRR Growth Audit Tool",
   description:
     "Answer 15 questions across the 5 AARRR stages. Get a 0–100 growth health score, identify your top bottlenecks, and receive ICE-prioritized experiments to fix them. Free, open-source startup growth diagnostic.",

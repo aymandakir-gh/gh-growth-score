@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { usePostHog } from "posthog-js/react";
-import { ScoringResult } from "@/lib/scoring";
+import { ScoringResult, Stage } from "@/lib/scoring";
+import { compareToBenchmark } from "@/lib/benchmarks";
+import { getStageRecommendation } from "@/lib/recommendations";
 import ScoreGauge from "./ScoreGauge";
 import StageScoreCard from "./StageScoreCard";
 import ExperimentCard from "./ExperimentCard";
@@ -12,6 +14,8 @@ import { useI18n } from "@/lib/i18n-context";
 
 interface ResultsDashboardProps {
   result: ScoringResult;
+  /** True when opened from a shared ?r= link — skips the email gate. */
+  shared?: boolean;
 }
 
 function ScoreLegend() {
@@ -38,10 +42,96 @@ function ScoreLegend() {
   );
 }
 
-export default function ResultsDashboard({ result }: ResultsDashboardProps) {
+function SharedBanner() {
+  return (
+    <section className="rounded-xl border border-brand-500/30 bg-brand-500/10 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <p className="text-sm text-slate-300">
+        <span className="font-semibold text-white">You&rsquo;re viewing a shared result.</span>{" "}
+        Curious how your own growth engine scores?
+      </p>
+      <a
+        href="/"
+        className="shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold transition-colors"
+      >
+        Take the free audit →
+      </a>
+    </section>
+  );
+}
+
+function BenchmarkComparison({ result }: { result: ScoringResult }) {
+  const stageScores = result.stageResults.reduce(
+    (acc, s) => {
+      acc[s.stage] = s.rawScore;
+      return acc;
+    },
+    {} as Record<Stage, number>
+  );
+  const cmp = compareToBenchmark(stageScores);
+
+  function deltaLabel(delta: number) {
+    if (delta > 0) return `+${delta}`;
+    return String(delta); // already has minus sign, or 0
+  }
+  function deltaClass(status: string) {
+    if (status === "above") return "text-green-400";
+    if (status === "below") return "text-red-400";
+    return "text-slate-400";
+  }
+
+  return (
+    <section aria-labelledby="benchmark-heading">
+      <h2 id="benchmark-heading" className="text-lg sm:text-xl font-bold text-white mb-1">
+        How you compare
+      </h2>
+      <p className="text-sm text-slate-400 mb-4">
+        Your score vs. the typical median per stage.{" "}
+        <span className="text-slate-400">
+          Medians are directional estimates (see{" "}
+          <a
+            href="https://github.com/aymandakir-gh/gh-growth-score/blob/main/datasets/benchmarks.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-slate-400"
+          >
+            benchmarks
+          </a>
+          ).
+        </span>
+      </p>
+
+      <div className="rounded-xl border border-slate-700 bg-slate-800/40 divide-y divide-slate-800">
+        <div className="flex items-center justify-between px-4 py-3">
+          <span className="text-sm font-semibold text-white">Overall</span>
+          <span className="flex items-baseline gap-2 text-sm">
+            <span className="text-white font-bold">{cmp.overallScore}</span>
+            <span className="text-slate-400">vs {cmp.overallMedian} median</span>
+            <span className={`font-semibold ${deltaClass(cmp.overallStatus)}`}>
+              {deltaLabel(cmp.overallDelta)}
+            </span>
+          </span>
+        </div>
+        {cmp.stages.map((s) => (
+          <div key={s.stage} className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-sm text-slate-300">{s.label}</span>
+            <span className="flex items-baseline gap-2 text-sm">
+              <span className="text-slate-200 font-medium">{s.score}</span>
+              <span className="text-slate-400">vs {s.median}</span>
+              <span className={`font-semibold w-12 text-right ${deltaClass(s.status)}`}>
+                {deltaLabel(s.delta)}
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function ResultsDashboard({ result, shared = false }: ResultsDashboardProps) {
   const { t } = useI18n();
   const posthog = usePostHog();
-  const [emailUnlocked, setEmailUnlocked] = useState(false);
+  const [emailUnlocked, setEmailUnlocked] = useState(shared);
 
   function handleEmailSuccess(email: string) {
     setEmailUnlocked(true);
@@ -67,6 +157,8 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
         <ScoreLegend />
       </section>
 
+      {shared && <SharedBanner />}
+
       {!emailUnlocked ? (
         <EmailGate
           overallScore={result.overallScore}
@@ -83,6 +175,7 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {result.stageResults
+                .slice()
                 .sort((a, b) => a.rawScore - b.rawScore)
                 .map((stageResult, idx) => (
                   <StageScoreCard
@@ -94,37 +187,44 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
             </div>
           </section>
 
+          <BenchmarkComparison result={result} />
+
           <section
             className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 sm:p-5"
-            aria-label="Top bottlenecks"
+            aria-label="Top bottlenecks and recommendations"
           >
             <div className="flex items-start gap-3">
               <span className="text-xl sm:text-2xl flex-shrink-0" aria-hidden="true">⚠️</span>
-              <div>
+              <div className="w-full">
                 <h3 className="font-semibold text-white mb-1">
                   {t("results.bottlenecks.title", {
                     count: result.bottlenecks.length,
                   })}
                 </h3>
-                <p className="text-sm text-slate-400 mb-3">
+                <p className="text-sm text-slate-400 mb-4">
                   {t("results.bottlenecks.desc")}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-3">
                   {result.bottlenecks.map((stage) => {
                     const sr = result.stageResults.find((s) => s.stage === stage);
-                    return sr ? (
-                      <span
+                    if (!sr) return null;
+                    const rec = getStageRecommendation(stage, sr.rawScore);
+                    return (
+                      <div
                         key={stage}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-300 text-sm font-medium"
+                        className="rounded-lg border border-slate-700/70 bg-slate-900/50 p-3.5"
                       >
-                        <span aria-hidden="true">{sr.emoji}</span>
-                        {/* Stage label comes from scoring.ts — always EN; i18n future task */}
-                        {sr.label}
-                        <span className="text-red-400 font-bold">
-                          {sr.rawScore}/100
-                        </span>
-                      </span>
-                    ) : null;
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span aria-hidden="true">{sr.emoji}</span>
+                          <span className="font-semibold text-white">{sr.label}</span>
+                          <span className="text-red-400 font-bold text-sm">
+                            {sr.rawScore}/100
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-300 font-medium">{rec.headline}</p>
+                        <p className="text-sm text-slate-400 mt-1">{rec.action}</p>
+                      </div>
+                    );
                   })}
                 </div>
               </div>
@@ -154,19 +254,19 @@ export default function ResultsDashboard({ result }: ResultsDashboardProps) {
                 href="https://github.com/aymandakir-gh/gh-growth-score"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-brand-400 hover:text-brand-300 transition-colors"
+                className="text-brand-400 underline hover:text-brand-300 transition-colors"
               >
                 {t("results.footer.fork")}
               </a>
               .
             </p>
-            <p className="text-xs text-slate-600 mt-2">
+            <p className="text-xs text-slate-400 mt-2">
               {t("results.footer.questions")}{" "}
               <a
                 href="https://growthackers.io"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-slate-500 transition-colors"
+                className="underline hover:text-slate-300 transition-colors"
               >
                 growthackers.io
               </a>

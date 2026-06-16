@@ -9,12 +9,37 @@ interface ShareCardProps {
 
 export default function ShareCard({ result }: ShareCardProps) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const token = encodeResultForURL(result);
+  const encodedToken = encodeURIComponent(token);
   const shareUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/?r=${token}`
-      : `https://growth-score.growthackers.io/?r=${token}`;
+      ? `${window.location.origin}/?r=${encodedToken}`
+      : `https://growth-score.growthackers.io/?r=${encodedToken}`;
+
+  // Download the branded report PNG. Stateless render of the URL token by the
+  // /api/og route (no DB, no PII) — fetched client-side and saved as a file.
+  async function downloadReport() {
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/og?r=${encodedToken}&v=report`);
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `growth-health-score-${result.overallScore}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Non-fatal — the share link still works without the download.
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const summaryText = [
     `📊 My Growth Health Score: ${result.overallScore}/100`,
@@ -70,6 +95,7 @@ export default function ShareCard({ result }: ShareCardProps) {
         <input
           readOnly
           value={shareUrl}
+          aria-label="Shareable result link"
           className="flex-1 px-3 py-2 text-xs rounded-lg bg-slate-900 border border-slate-700 text-slate-300 focus:outline-none font-mono truncate"
         />
         <button
@@ -97,6 +123,16 @@ export default function ShareCard({ result }: ShareCardProps) {
         >
           <span>𝕏</span> Share on X
         </a>
+
+        <button
+          onClick={downloadReport}
+          disabled={downloading}
+          aria-busy={downloading}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span aria-hidden="true">⬇️</span>
+          {downloading ? "Preparing…" : "Download report"}
+        </button>
 
         <button
           onClick={() => {

@@ -1,14 +1,21 @@
-# Growth Health Score — Free AARRR diagnostic for SaaS founders
+# Growth Health Score — free AARRR diagnostic for SaaS founders
 
+[![CI](https://github.com/aymandakir-gh/gh-growth-score/actions/workflows/ci.yml/badge.svg)](https://github.com/aymandakir-gh/gh-growth-score/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/aymandakir-gh/gh-growth-score?style=social)](https://github.com/aymandakir-gh/gh-growth-score)
 
-**Diagnose your growth engine in 3 minutes.** Answer 15 questions across the 5 AARRR stages, get a 0–100 score per stage, identify your top bottlenecks, and receive 3 ICE-prioritized experiments to fix them.
+**Diagnose your growth engine in 3 minutes.** Answer 15 questions across the 5
+AARRR stages, get a 0–100 score per stage, find your top bottlenecks, and walk
+away with 3 ICE-prioritized experiments to fix them.
 
 Built by [GrowthHackers](https://growthackers.io) — free and open-source forever.
 
-![Screenshot](./screenshot-placeholder.png)
-> _Add a real screenshot here after your first local run (`npm run dev`, open localhost:3000, take a screenshot, save as `screenshot-placeholder.png`)._
+**Live demo:** _<!-- add your deployed URL here, e.g. https://growth-score.vercel.app -->_ — deploy your own in one click ↓
+
+![Growth Health Score — landing page](./docs/screenshot.png)
+
+> _Screenshot is real and reproducible: `npm run build && npm run screenshot`
+> regenerates `docs/screenshot.png` via the committed Playwright script._
 
 ---
 
@@ -16,19 +23,11 @@ Built by [GrowthHackers](https://growthackers.io) — free and open-source forev
 
 - **15 diagnostic questions** — 3 per AARRR stage (Acquisition, Activation, Retention, Revenue, Referral)
 - **0–100 score per stage** — weighted by growth-model importance
-- **Bottleneck detection** — surfaces your top 3 weakest stages
+- **Bottleneck detection** — surfaces your 3 weakest stages
 - **ICE-prioritized experiments** — 3 actionable experiments ranked by Impact × Confidence ÷ Effort
 - **Shareable results** — encoded in the URL, no account needed
-- **Email gate** — captures lead email before revealing full breakdown (optional, graceful degradation without backend)
-
----
-
-## How it works
-
-```
-Answer 15 questions  →  Get your AARRR score  →  See bottlenecks + experiments
-      (~3 min)              (0–100 per stage)        (ICE-prioritized roadmap)
-```
+- **9 languages** — EN, AR (RTL), IT, NL, ZH, ES, FR, DE, PT-BR
+- **Works with zero backend** — the optional email gate degrades gracefully (see below)
 
 ---
 
@@ -36,39 +35,76 @@ Answer 15 questions  →  Get your AARRR score  →  See bottlenecks + experimen
 
 ```bash
 git clone https://github.com/aymandakir-gh/gh-growth-score.git
-cd gh-growth-score
-npm install
-cp .env.example .env.local
-npm run dev
+cd gh-growth-score && npm install && npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). No env vars required — the
+app runs fully out of the box.
 
 ---
 
-## Self-hosting
+## How the AARRR score works
 
-### Environment variables
+Everything is a pure function in [`lib/scoring.ts`](lib/scoring.ts) (the single
+source of truth — the UI just renders what it returns).
 
-| Variable | Required | Description |
+**1. Answer the questions.** Each of the 15 questions has a 5-point scale, scored
+`0` (critical gap) to `4` (best-in-class).
+
+**2. Score each stage (0–100).** A stage's raw score is the share of points
+earned across its 3 questions:
+
+```
+stageScore = round( sum(answers) / (questions × 4) × 100 )
+```
+
+**3. Weight into an overall score.** Stages are weighted by their typical
+leverage in a SaaS growth model (weights sum to 1.0):
+
+| Stage | Weight | Why |
 |---|---|---|
-| `LEADS_API_URL` | No | URL of the gh-leads-core service. If unset, lead capture is skipped gracefully — the app still works fully. |
-| `NODE_ENV` | No | `development` or `production` |
+| 🎯 Acquisition | 20% | Top-of-funnel reach |
+| ⚡ Activation | 20% | First "aha moment" |
+| 🔄 Retention | 25% | Compounding base — highest leverage |
+| 💰 Revenue | 25% | Monetization & expansion — highest leverage |
+| 📣 Referral | 10% | Organic word-of-mouth |
 
-Create `.env.local` from the example:
-
-```bash
-cp .env.example .env.local
-# Edit .env.local and set LEADS_API_URL if you have a leads backend
+```
+overallScore = round( Σ stageScore × weight )
 ```
 
-### Running tests
+**4. Find the bottlenecks.** The 3 lowest-scoring stages are flagged as your
+bottlenecks (`findBottlenecks`).
 
-```bash
-npm test
+**5. Prescribe experiments.** From each bottleneck stage, the single
+highest-**ICE** experiment is selected from the [`EXPERIMENT_BANK`](lib/scoring.ts):
+
+```
+ICE = round( Impact × Confidence ÷ Effort )      // all 1–10, higher = do first
 ```
 
-41 unit tests cover the scoring engine (`lib/scoring.ts`): scoring math, weighting, bottleneck ranking, ICE formula, experiment selection, URL encode/decode round-trips.
+You get the top 3 experiments, prioritized — a concrete roadmap, not just a number.
+
+---
+
+## The email gate (decision: kept, env-configured, optional)
+
+This OSS build **keeps the email gate but makes it fully optional**, so the tool
+works with **zero backend**:
+
+- Submitting the form `POST`s to `app/api/lead/route.ts`, a server-side proxy
+  that keeps `LEADS_API_URL` private (never exposed to the browser).
+- **If `LEADS_API_URL` is set**, the lead is forwarded to your backend / CRM.
+- **If it's unset** (the default), the route logs the score only (no PII) and
+  returns `ok` so the results screen still unlocks. Nothing is stored, nothing
+  breaks. No secrets are committed.
+
+The endpoint validates email + score and is **rate-limited to 10 requests /
+minute / IP** to blunt abuse. To wire it to a real CRM, edit
+`app/api/lead/route.ts` (HubSpot, Supabase, your own API, etc.).
+
+> Prefer no gate at all? Render `ResultsDashboard` without `EmailGate` in
+> `components/ResultsDashboard.tsx` — the scoring is pure and never needs the gate.
 
 ---
 
@@ -76,16 +112,58 @@ npm test
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/aymandakir-gh/gh-growth-score)
 
-After deploying, add the `LEADS_API_URL` environment variable in your Vercel project settings if you want lead capture. Leave it empty to run without a backend — the app degrades gracefully.
+Turnkey — `vercel.json` is `{ "framework": "nextjs" }`, so there are no required
+secrets and no build config to wire up. From a clone, one command ships it:
+
+```bash
+npx vercel --prod
+```
+
+To enable lead capture after deploying, add `LEADS_API_URL` (and optionally
+`NEXT_PUBLIC_SENTRY_DSN` / `NEXT_PUBLIC_POSTHOG_KEY`) in **Project Settings →
+Environment Variables**. Leave them empty to run backend-free.
+
+---
+
+## Self-hosting — environment variables
+
+All optional. The app degrades gracefully when any are absent.
+
+| Variable | Purpose |
+|---|---|
+| `LEADS_API_URL` | gh-leads-core / CRM endpoint. Unset = lead capture skipped (app still works). |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry error monitoring. Unset = disabled. |
+| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog product analytics. Unset = disabled. |
+| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog host (defaults to EU cloud). |
+
+```bash
+cp .env.example .env.local   # then fill in only what you need
+```
+
+---
+
+## Tests & CI
+
+```bash
+npm test     # 127 unit tests (Vitest)
+npm run lint # next lint (eslint-config-next)
+npm run build
+```
+
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs
+**install → lint → test → build** on every push and PR to `main`.
+
+Coverage: the scoring engine (`lib/scoring.ts`), the `/api/lead` route
+(validation, rate limiting, dev fallback, upstream proxy), the rate limiter,
+i18n, and the `LanguageSelector` component.
 
 ---
 
 ## Stack
 
-- **Next.js 14** (App Router)
-- **TypeScript**
-- **Tailwind CSS**
-- **Vitest** (unit tests)
+- **Next.js 14** (App Router) · **TypeScript** · **Tailwind CSS**
+- **Vitest** unit tests · **Playwright** screenshot capture
+- **Sentry + PostHog** observability (optional, graceful degrade)
 - No external UI libraries — pure Tailwind components
 
 ---
@@ -94,30 +172,30 @@ After deploying, add the `LEADS_API_URL` environment variable in your Vercel pro
 
 ```
 app/
-  page.tsx              # Root page — quiz or results
-  layout.tsx            # Metadata, global styles
-  globals.css           # Tailwind base + custom tokens
-  api/lead/route.ts     # Lead capture proxy (server-side, keeps LEADS_API_URL private)
+  page.tsx              # Root — quiz or results, hydrates shared result from ?r=
+  layout.tsx            # Metadata, PostHog provider, global styles
+  api/lead/route.ts     # Lead capture proxy (validation + rate limit + graceful fallback)
 components/
   GrowthQuiz.tsx        # Quiz orchestrator (intro + question flow)
-  StageProgress.tsx     # AARRR step progress bar (desktop labels + mobile dots)
   QuestionCard.tsx      # Single question with 5 options
-  ResultsDashboard.tsx  # Results view (gated behind email)
-  EmailGate.tsx         # Email capture form with score preview
-  ScoreGauge.tsx        # SVG arc gauge for overall score
-  StageScoreCard.tsx    # Per-stage score card with bar + bottleneck badge
-  ExperimentCard.tsx    # ICE experiment card
+  ResultsDashboard.tsx  # Results view (score gauge, stage cards, experiments)
+  EmailGate.tsx         # Optional email capture with score preview
+  ScoreGauge.tsx        # SVG arc gauge · StageScoreCard.tsx · ExperimentCard.tsx
+  LanguageSelector.tsx  # Accessible 9-language dropdown (WCAG 2.1 AA)
   ShareCard.tsx         # Share URL + tweet button
 lib/
-  scoring.ts            # All questions, scoring logic, experiments (single source of truth)
-  scoring.test.ts       # 41 unit tests
+  scoring.ts            # Questions, scoring, experiments — pure, single source of truth
+  rate-limit.ts         # In-memory sliding-window limiter for /api/lead
+  i18n.ts               # 9-language flat-key dictionaries
+scripts/
+  screenshot.mjs        # Playwright capture → docs/screenshot.png
 ```
 
 ---
 
 ## Customize the scoring model
 
-Everything lives in `lib/scoring.ts`:
+Edit [`lib/scoring.ts`](lib/scoring.ts):
 
 | Export | Purpose |
 |---|---|
@@ -129,29 +207,19 @@ Everything lives in `lib/scoring.ts`:
 | `findBottlenecks()` | N weakest stages |
 | `encodeResultForURL()` | Base64 encode answers for sharing |
 
----
-
-## Wire the email gate to a CRM
-
-Edit `app/api/lead/route.ts`. The route already validates email + score and proxies to `LEADS_API_URL/api/lead`. Replace `LEADS_API_URL` with your backend URL, or swap the upstream call for your CRM SDK (HubSpot, Supabase, etc.).
+Keep it pure (no network calls, no side effects) and add tests for any change.
 
 ---
 
 ## Contributing
 
-PRs welcome:
-
-1. Keep `lib/scoring.ts` pure — no network calls, no side effects
-2. Add/update tests for any scoring change
-3. New experiments go in `EXPERIMENT_BANK`
-4. Keep the UI dark and responsive
+PRs welcome. Keep `lib/scoring.ts` pure, add/update tests for any scoring change,
+put new experiments in `EXPERIMENT_BANK`, and keep the UI dark and responsive.
 
 ---
 
 ## License
 
 MIT — use it, fork it, white-label it. Attribution appreciated, not required.
-
----
 
 Built with care by [GrowthHackers](https://growthackers.io).

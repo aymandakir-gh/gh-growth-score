@@ -2,6 +2,32 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v1.4.0: client-side PDF export ✅
+
+**Released v1.4.0** — the full report now exports as a real **PDF**, generated
+entirely client-side (no backend, no PII leaves the browser). See `PRD.md`
+(Slice 3).
+
+### Verification (gate — all green)
+- `npm run build` → compiles + type-checks
+- `npm test` → **203/203** unit (+PDF: valid `%PDF-` header ×2 diagnostics ×3 profiles)
+- `npm run e2e` → **20/20** Playwright (+PDF download AARRR + PLG)
+- `npm run screenshot` → regenerated
+
+### What shipped
+- **`lib/pdf-report.ts`** — pure `buildReportPdf(diagnostic, result)` → PDF bytes
+  via **jsPDF**: score, breakdown-vs-median bars, top experiments, the full
+  action playbook, honest-benchmark footer, multi-page with page numbers. No DOM
+  → unit-tested in node; runs in the browser.
+- **`ShareCard`** — "Download PDF" button (jsPDF lazy-loaded on click); the PNG
+  button is now labelled "Download PNG". Filenames: `…-<score>.pdf`.
+- **Dependency** — added `jspdf` (MIT, pure-JS, client-side).
+
+### Decisions
+- **jsPDF** over print-to-PDF: deterministic, node-testable, zero-backend.
+- PDF is built from the same `(diagnostic, result)` as the rest of the pipeline,
+  so it stays in sync with both diagnostics + the playbook automatically.
+
 ## 2026-06-16 — v1.3.0: actionable playbook output ✅
 
 **Released v1.3.0** — weak stages now come with a concrete, exportable playbook.

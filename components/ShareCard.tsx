@@ -12,6 +12,7 @@ interface ShareCardProps {
 export default function ShareCard({ diagnostic, result }: ShareCardProps) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   const token = encodeResultToken(diagnostic, result.answers);
   const encodedToken = encodeURIComponent(token);
@@ -46,6 +47,29 @@ export default function ShareCard({ diagnostic, result }: ShareCardProps) {
       // Non-fatal — the share link still works without the download.
     } finally {
       setDownloading(false);
+    }
+  }
+
+  // Build the full PDF report client-side (no backend, no PII leaves the browser).
+  // jsPDF is heavy, so it's lazy-loaded only when the user asks for the PDF.
+  async function downloadPdf() {
+    setPdfBusy(true);
+    try {
+      const { buildReportPdf } = await import("@/lib/pdf-report");
+      const bytes = buildReportPdf(diagnostic, result);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fileBase}-${result.overallScore}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Non-fatal — the share link + PNG still work.
+    } finally {
+      setPdfBusy(false);
     }
   }
 
@@ -139,7 +163,17 @@ export default function ShareCard({ diagnostic, result }: ShareCardProps) {
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span aria-hidden="true">⬇️</span>
-          {downloading ? "Preparing…" : "Download report"}
+          {downloading ? "Preparing…" : "Download PNG"}
+        </button>
+
+        <button
+          onClick={downloadPdf}
+          disabled={pdfBusy}
+          aria-busy={pdfBusy}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span aria-hidden="true">📄</span>
+          {pdfBusy ? "Building…" : "Download PDF"}
         </button>
 
         <button

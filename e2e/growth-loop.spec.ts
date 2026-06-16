@@ -68,7 +68,7 @@ test.describe("downloadable report", () => {
     await expect(page.getByText("Share your score")).toBeVisible();
 
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: /download report/i }).click();
+    await page.getByRole("button", { name: /download png/i }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/growth-health-score.*\.png/);
   });

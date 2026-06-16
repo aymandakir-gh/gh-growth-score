@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { type Diagnostic, type DiagnosticResult } from "@/lib/engine";
 import { encodeResultToken } from "@/lib/diagnostics";
+import { useI18n } from "@/lib/i18n-context";
 
 interface ShareCardProps {
   diagnostic: Diagnostic;
@@ -10,6 +11,7 @@ interface ShareCardProps {
 }
 
 export default function ShareCard({ diagnostic, result }: ShareCardProps) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -117,10 +119,8 @@ export default function ShareCard({ diagnostic, result }: ShareCardProps) {
 
   return (
     <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-5">
-      <h3 className="font-semibold text-white mb-1">Share your score</h3>
-      <p className="text-sm text-slate-400 mb-4">
-        Your results are encoded in the URL — no account needed to share.
-      </p>
+      <h3 className="font-semibold text-white mb-1">{t("share.title")}</h3>
+      <p className="text-sm text-slate-400 mb-4">{t("share.desc")}</p>
 
       {/* URL input */}
       <div className="flex gap-2 mb-3">

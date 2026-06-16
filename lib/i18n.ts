@@ -92,6 +92,15 @@ const en: TranslationDict = {
   "playbook.download": "Download .md",
   "playbook.measure": "Measure",
   "embed.poweredBy": "Powered by Growth Health Score · growthackers.io",
+
+  // ── Results/share (localized) ──────────────────────────────────────────
+  "results.compare.title": "How you compare",
+  "results.compare.overall": "Overall",
+  "results.shared.title": "You're viewing a shared result.",
+  "results.shared.desc": "Curious how your own growth engine scores?",
+  "results.shared.cta": "Take the free audit →",
+  "share.title": "Share your score",
+  "share.desc": "Your results are encoded in the URL — no account needed to share.",
 };
 
 const ar: TranslationDict = {
@@ -159,6 +168,15 @@ const ar: TranslationDict = {
   "playbook.download": "تنزيل .md",
   "playbook.measure": "قِس",
   "embed.poweredBy": "مُشغّل بواسطة Growth Health Score · growthackers.io",
+
+  // ── Results/share (localized) ──────────────────────────────────────────
+  "results.compare.title": "كيف تُقارَن",
+  "results.compare.overall": "إجمالي",
+  "results.shared.title": "أنت تشاهد نتيجة مُشارَكة.",
+  "results.shared.desc": "هل تتساءل كيف ستكون نتيجة محرّك نموك؟",
+  "results.shared.cta": "ابدأ التدقيق المجاني →",
+  "share.title": "شارك نتيجتك",
+  "share.desc": "نتائجك مُرمَّزة في الرابط — لا حاجة لحساب للمشاركة.",
 };
 
 const it: TranslationDict = {
@@ -224,6 +242,15 @@ const it: TranslationDict = {
   "playbook.download": "Scarica .md",
   "playbook.measure": "Misura",
   "embed.poweredBy": "Realizzato con Growth Health Score · growthackers.io",
+
+  // ── Results/share (localized) ──────────────────────────────────────────
+  "results.compare.title": "Come ti posizioni",
+  "results.compare.overall": "Totale",
+  "results.shared.title": "Stai visualizzando un risultato condiviso.",
+  "results.shared.desc": "Curioso di sapere come va il tuo motore di crescita?",
+  "results.shared.cta": "Fai l'audit gratuito →",
+  "share.title": "Condividi il tuo punteggio",
+  "share.desc": "I tuoi risultati sono codificati nell'URL — nessun account necessario.",
 };
 
 const nl: TranslationDict = {
@@ -289,6 +316,15 @@ const nl: TranslationDict = {
   "playbook.download": ".md downloaden",
   "playbook.measure": "Meet",
   "embed.poweredBy": "Mogelijk gemaakt door Growth Health Score · growthackers.io",
+
+  // ── Results/share (localized) ──────────────────────────────────────────
+  "results.compare.title": "Hoe jij scoort",
+  "results.compare.overall": "Totaal",
+  "results.shared.title": "Je bekijkt een gedeeld resultaat.",
+  "results.shared.desc": "Benieuwd hoe jouw groeimotor scoort?",
+  "results.shared.cta": "Doe de gratis audit →",
+  "share.title": "Deel je score",
+  "share.desc": "Je resultaten staan in de URL — geen account nodig om te delen.",
 };
 
 const zh: TranslationDict = {
@@ -353,6 +389,15 @@ const zh: TranslationDict = {
   "playbook.download": "下载 .md",
   "playbook.measure": "衡量",
   "embed.poweredBy": "由 Growth Health Score 提供 · growthackers.io",
+
+  // ── Results/share (localized) ──────────────────────────────────────────
+  "results.compare.title": "你的对比情况",
+  "results.compare.overall": "总体",
+  "results.shared.title": "你正在查看一个分享的结果。",
+  "results.shared.desc": "想知道你自己的增长引擎得分吗？",
+  "results.shared.cta": "免费做测评 →",
+  "share.title": "分享你的分数",
+  "share.desc": "你的结果已编码在网址中——无需账户即可分享。",
 };
 
 const es: TranslationDict = {
@@ -418,6 +463,15 @@ const es: TranslationDict = {
   "playbook.download": "Descargar .md",
   "playbook.measure": "Medir",
   "embed.poweredBy": "Con tecnología de Growth Health Score · growthackers.io",
+
+  // ── Results/share (localized) ──────────────────────────────────────────
+  "results.compare.title": "Cómo te comparas",
+  "results.compare.overall": "General",
+  "results.shared.title": "Estás viendo un resultado compartido.",
+  "results.shared.desc": "¿Curioso por saber cómo puntúa tu motor de crecimiento?",
+  "results.shared.cta": "Haz la auditoría gratis →",
+  "share.title": "Comparte tu puntuación",
+  "share.desc": "Tus resultados están codificados en la URL — no necesitas cuenta para compartir.",
 };
 
 const fr: TranslationDict = {
@@ -483,6 +537,15 @@ const fr: TranslationDict = {
   "playbook.download": "Télécharger .md",
   "playbook.measure": "Mesurer",
   "embed.poweredBy": "Propulsé par Growth Health Score · growthackers.io",
+
+  // ── Results/share (localized) ──────────────────────────────────────────
+  "results.compare.title": "Comment vous vous situez",
+  "results.compare.overall": "Global",
+  "results.shared.title": "Vous consultez un résultat partagé.",
+  "results.shared.desc": "Curieux de savoir comment votre moteur de croissance se situe ?",
+  "results.shared.cta": "Faites l'audit gratuit →",
+  "share.title": "Partagez votre score",
+  "share.desc": "Vos résultats sont encodés dans l'URL — aucun compte requis pour partager.",
 };
 
 const de: TranslationDict = {
@@ -548,6 +611,15 @@ const de: TranslationDict = {
   "playbook.download": ".md herunterladen",
   "playbook.measure": "Messen",
   "embed.poweredBy": "Bereitgestellt von Growth Health Score · growthackers.io",
+
+  // ── Results/share (localized) ──────────────────────────────────────────
+  "results.compare.title": "So schneiden Sie ab",
+  "results.compare.overall": "Gesamt",
+  "results.shared.title": "Sie sehen ein geteiltes Ergebnis.",
+  "results.shared.desc": "Neugierig, wie Ihr eigener Wachstumsmotor abschneidet?",
+  "results.shared.cta": "Kostenlosen Audit starten →",
+  "share.title": "Teilen Sie Ihr Ergebnis",
+  "share.desc": "Ihre Ergebnisse sind in der URL kodiert — kein Konto zum Teilen nötig.",
 };
 
 const ptBr: TranslationDict = {
@@ -613,6 +685,15 @@ const ptBr: TranslationDict = {
   "playbook.download": "Baixar .md",
   "playbook.measure": "Medir",
   "embed.poweredBy": "Desenvolvido com Growth Health Score · growthackers.io",
+
+  // ── Results/share (localized) ──────────────────────────────────────────
+  "results.compare.title": "Como você se compara",
+  "results.compare.overall": "Geral",
+  "results.shared.title": "Você está vendo um resultado compartilhado.",
+  "results.shared.desc": "Quer saber como seu motor de crescimento pontua?",
+  "results.shared.cta": "Faça a auditoria grátis →",
+  "share.title": "Compartilhe sua pontuação",
+  "share.desc": "Seus resultados estão codificados na URL — não precisa de conta para compartilhar.",
 };
 
 export const translations: Record<Locale, TranslationDict> = {
@@ -659,4 +740,20 @@ export function getLangDir(code: Locale): "ltr" | "rtl" {
 
 export function isValidLang(code: string): code is Locale {
   return Object.prototype.hasOwnProperty.call(LOCALE_LABELS, code);
+}
+
+/**
+ * Resolve a locale from a URL query string (`?lang=`). Returns a valid Locale or
+ * null. Pure — no storage, no globals. This is the single source for locale
+ * selection: we never read/write localStorage, so a chosen language is fully
+ * shareable and reload-stable via the URL.
+ */
+export function resolveLocale(search: string): Locale | null {
+  try {
+    const v = new URLSearchParams(search).get("lang");
+    if (v && isValidLang(v)) return v;
+  } catch {
+    // malformed query → fall through
+  }
+  return null;
 }

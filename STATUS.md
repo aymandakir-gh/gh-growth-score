@@ -2,6 +2,33 @@
 
 _Living status log. Most recent on top._
 
+## 2026-06-16 — v1.6.0: localization via ?lang= + AR RTL ✅
+
+**Released v1.6.0** — UI + results in **9 languages**, selected by `?lang=` URL
+param (never localStorage), with a clean Arabic RTL pass. See `PRD.md` (Slice 5).
+
+### Verification (gate — all green)
+- `npm run build` → compiles + type-checks
+- `npm test` → **212/212** unit (+`resolveLocale` resolution/fallback/purity)
+- `npm run e2e` → **30/30** Playwright (+`?lang=` ar-RTL/fr/es/invalid-fallback,
+  selector writes `?lang=` & never localStorage, **Arabic RTL results axe-clean**)
+- `npm run screenshot` → regenerated
+
+### What shipped
+- **URL-driven locale** — `resolveLocale(search)` (pure) + `I18nProvider` reads
+  `?lang=` on mount and `setLocale` writes it back via `history.replaceState`
+  (shareable, reload-stable). **No localStorage anywhere** (asserted in e2e).
+- **Localized results surface** — benchmark heading + Overall, shared banner +
+  CTA, and share heading/sub now i18n-keyed and translated across all 9 locales
+  (parity-enforced). The embed inherits `?lang=` for free.
+- **AR RTL pass** — `dir=rtl` driven by the provider; new surfaces use logical
+  CSS; axe clean on the Arabic RTL results page.
+
+### Decisions
+- **Locale source = `?lang=` only** (never localStorage) → fully shareable +
+  reload-stable; honest scope: diagnostic *content* (questions/tactics) stays
+  English, the UI + results *presentation* is localized.
+
 ## 2026-06-16 — v1.5.0: embeddable widget ✅
 
 **Released v1.5.0** — any site can host the audit with one `<script>` tag.

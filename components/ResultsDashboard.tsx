@@ -48,23 +48,25 @@ function ScoreLegend() {
 }
 
 function SharedBanner() {
+  const { t } = useI18n();
   return (
     <section className="rounded-xl border border-brand-500/30 bg-brand-500/10 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <p className="text-sm text-slate-300">
-        <span className="font-semibold text-white">You&rsquo;re viewing a shared result.</span>{" "}
-        Curious how your own growth engine scores?
+        <span className="font-semibold text-white">{t("results.shared.title")}</span>{" "}
+        {t("results.shared.desc")}
       </p>
       <a
         href="/"
         className="shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold transition-colors"
       >
-        Take the free audit →
+        {t("results.shared.cta")}
       </a>
     </section>
   );
 }
 
 function BenchmarkComparison({ diagnostic, result }: { diagnostic: Diagnostic; result: DiagnosticResult }) {
+  const { t } = useI18n();
   const dimScores = result.dimensionResults.reduce(
     (acc, s) => {
       acc[s.dimension] = s.rawScore;
@@ -87,7 +89,7 @@ function BenchmarkComparison({ diagnostic, result }: { diagnostic: Diagnostic; r
   return (
     <section aria-labelledby="benchmark-heading">
       <h2 id="benchmark-heading" className="text-lg sm:text-xl font-bold text-white mb-1">
-        How you compare
+        {t("results.compare.title")}
       </h2>
       <p className="text-sm text-slate-400 mb-4">
         Your score vs. the typical median per stage.{" "}
@@ -107,7 +109,7 @@ function BenchmarkComparison({ diagnostic, result }: { diagnostic: Diagnostic; r
 
       <div className="rounded-xl border border-slate-700 bg-slate-800/40 divide-y divide-slate-800">
         <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-sm font-semibold text-white">Overall</span>
+          <span className="text-sm font-semibold text-white">{t("results.compare.overall")}</span>
           <span className="flex items-baseline gap-2 text-sm">
             <span className="text-white font-bold">{cmp.overallScore}</span>
             <span className="text-slate-400">vs {cmp.overallMedian} median</span>

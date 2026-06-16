@@ -8,7 +8,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
-import { Locale, RTL_LOCALES, translations, LOCALE_LABELS } from "./i18n";
+import { Locale, RTL_LOCALES, translations, LOCALE_LABELS, resolveLocale } from "./i18n";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -33,9 +33,18 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function I18nProvider({ children }: { children: ReactNode }) {
+  // SSR/first paint render "en" to avoid a hydration mismatch; the URL's ?lang=
+  // is applied in an effect on mount (below). We never touch localStorage — the
+  // URL is the single, shareable source of truth for locale.
   const [locale, setLocaleState] = useState<Locale>("en");
 
   const dir: "ltr" | "rtl" = RTL_LOCALES.includes(locale) ? "rtl" : "ltr";
+
+  // Apply ?lang= from the URL on mount.
+  useEffect(() => {
+    const fromUrl = resolveLocale(window.location.search);
+    if (fromUrl) setLocaleState(fromUrl);
+  }, []);
 
   // Sync dir + lang on <html> so screen readers and CSS inherit correctly
   useEffect(() => {
@@ -45,6 +54,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
+    // Reflect the choice in the URL (shareable, reload-stable) — never
+    // localStorage. Preserve any other params (?d=, ?r=, ?industry=).
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("lang", newLocale);
+      window.history.replaceState({}, "", url);
+    } catch {
+      // non-fatal (e.g. SSR / no history)
+    }
   }, []);
 
   const t = useCallback(

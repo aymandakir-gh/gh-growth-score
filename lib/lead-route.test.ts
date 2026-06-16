@@ -204,6 +204,27 @@ describe("POST /api/lead — dev fallback (LEADS_API_URL unset)", () => {
     const data = await res.json();
     expect(data.ok).toBe(true);
   });
+
+  // Regression guard for OWASP A09 (issue #4): the dev fallback must not log PII.
+  it("does NOT log email or name to the console (no PII in logs)", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const POST = await importRoute();
+    await POST(
+      makeRequest({
+        email: "secret.person@example.com",
+        overallScore: 88,
+        firstName: "Bartholomew",
+        company: "Acme",
+      }),
+    );
+    const logged = [...logSpy.mock.calls, ...warnSpy.mock.calls]
+      .flat()
+      .map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
+      .join(" ");
+    expect(logged).not.toContain("secret.person@example.com");
+    expect(logged).not.toContain("Bartholomew");
+  });
 });
 
 // ─── Upstream proxy (LEADS_API_URL set) ──────────────────────────────────────

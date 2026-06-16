@@ -2,43 +2,56 @@
 
 Filed by: W7·Security (automated OWASP audit)
 
+> **Status (2026-06-16): both findings RESOLVED ahead of the v1.0.0 launch.**
+> Tracked as GitHub issues [#3](https://github.com/aymandakir-gh/gh-growth-score/issues/3)
+> (A04) and [#4](https://github.com/aymandakir-gh/gh-growth-score/issues/4) (A09).
+
 ---
 
-## 🟠 MEDIUM — A04: No rate limiting on POST /api/lead
+## 🟠 MEDIUM — A04: No rate limiting on POST /api/lead  ✅ RESOLVED
 
 **File:** `app/api/lead/route.ts`
 **OWASP:** A04 Insecure Design
+**Issue (GitHub):** #3
 
 **Issue:**
-`POST /api/lead` has no rate limiting. Any actor can flood the endpoint with arbitrary email submissions, generating noise in gh-leads-core and PostHog, and potentially abusing the upstream `gh-leads-core` quota.
+`POST /api/lead` had no rate limiting. Any actor could flood the endpoint with
+arbitrary email submissions, generating noise in gh-leads-core and PostHog, and
+potentially abusing the upstream `gh-leads-core` quota.
 
-`POST /api/scan` in gh-ai-rank-tracker implements an in-memory sliding-window limiter (10 req/min/IP) — the same pattern should be applied here.
+**Resolution:**
+Added `lib/rate-limit.ts` — an in-memory sliding-window `InMemoryRateLimiter`
+(10 requests / minute / IP). It is applied at the very top of the route (before
+body parsing) keyed on the client IP from `x-forwarded-for` (Vercel-forwarded),
+returning HTTP 429 when exceeded. Best-effort per-instance protection — a shared
+store is intentionally avoided to keep the OSS build zero-backend.
 
-**Remediation:**
-1. Import or replicate `InMemoryRateLimiter` from gh-ai-rank-tracker (or abstract to a shared package).
-2. Apply: `if (!limiter.check(ip)) return NextResponse.json({ ok: false, error: 'Rate limit exceeded' }, { status: 429 });`
-3. IP derived from `x-forwarded-for` (Vercel forwards this).
-
-**Priority:** Ship before public traffic — currently no load protection.
+Covered by 14 tests (limiter unit tests + route 429 tests). Fixed in the commit
+that closed #3.
 
 ---
 
-## 🟡 LOW — A09: /api/lead logs email PII in dev fallback (main branch)
+## 🟡 LOW — A09: /api/lead logs email PII in dev fallback  ✅ RESOLVED
 
-**File:** `app/api/lead/route.ts` (main branch only)
+**File:** `app/api/lead/route.ts`
 **OWASP:** A09 Security Logging Failures
+**Issue (GitHub):** #4
 
 **Issue:**
-In `main`, the dev fallback logs the full `{ email, overallScore, company, firstName }` object:
+An earlier `main` revision logged the full `{ email, overallScore, company,
+firstName }` object in the dev fallback, leaking PII (email, name) to server
+logs — a GDPR/CCPA concern.
+
+**Resolution:**
+The dev fallback now logs the score only:
 ```ts
-console.log("[gh-growth-score] Lead (not stored):", { email, overallScore, company, firstName });
+console.log("[gh-growth-score] Lead (not stored) — score:", overallScore);
 ```
-This leaks PII (email, name) to server logs — a compliance issue under GDPR/CCPA.
-
-**Status:** ✅ **Already fixed in `w6/tests-20260610-0910` branch** — that branch logs `overallScore` only. Merge that branch to close this finding.
-
-**Remediation:** Merge `w6/tests-20260610-0910` → main.
+Locked with a regression test ("does NOT log email or name to the console") that
+spies on `console.log`/`console.warn` and asserts no PII appears in any logged
+argument.
 
 ---
 
 *Audit performed by W7·Security agent. Deploy safe: YES. No 🔴 blockers found.*
+*Both findings closed 2026-06-16 (issues #3, #4) for the v1.0.0 launch.*

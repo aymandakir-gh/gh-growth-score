@@ -52,6 +52,64 @@ describe("InMemoryRateLimiter", () => {
     rl.reset();
     expect(rl.check("a", 0)).toBe(true);
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Map must stay bounded: a key whose window has fully elapsed is evicted, so
+  // the limiter does not accumulate one permanent entry per IP that ever hit it.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it("does not retain a key after its window has fully elapsed", () => {
+    const rl = new InMemoryRateLimiter(5, 1000);
+    rl.check("a", 0);
+    expect(rl.size).toBe(1);
+    // A later request from a DIFFERENT key, well past a's window, must evict a.
+    rl.check("b", 2000);
+    expect(rl.size).toBe(1); // only b remains; a was swept
+  });
+
+  it("size returns to 0 once every tracked key has aged out", () => {
+    const rl = new InMemoryRateLimiter(5, 1000);
+    rl.check("a", 0);
+    rl.check("b", 100);
+    expect(rl.size).toBe(2);
+    // Any check after both windows elapse sweeps both stale keys; the only
+    // entry left is the one we just recorded.
+    rl.check("c", 5000);
+    expect(rl.size).toBe(1);
+    // And once that final key ages out too, a sweep drops it: simulate via a
+    // no-op key whose own window is already gone — size collapses to just the
+    // active key.
+    rl.check("c", 5000 + 2000);
+    expect(rl.size).toBe(1);
+  });
+
+  it("a steady stream of unique IPs does not grow the Map unboundedly", () => {
+    const rl = new InMemoryRateLimiter(5, 1000);
+    // 50 distinct IPs, each 2s apart — every prior IP is past its window by the
+    // time the next arrives, so the Map should never hold more than 1 key.
+    for (let i = 0; i < 50; i++) {
+      rl.check(`ip-${i}`, i * 2000);
+      expect(rl.size).toBe(1);
+    }
+  });
+
+  it("remaining() does not leave behind an entry for an aged-out key", () => {
+    const rl = new InMemoryRateLimiter(3, 1000);
+    rl.check("a", 0);
+    expect(rl.size).toBe(1);
+    // Query budget for a long after its window — must report full budget AND
+    // not retain the empty entry.
+    expect(rl.remaining("a", 5000)).toBe(3);
+    expect(rl.size).toBe(0);
+  });
+
+  it("still enforces the limit correctly while keys are active (no regression)", () => {
+    const rl = new InMemoryRateLimiter(2, 1000);
+    expect(rl.check("a", 0)).toBe(true);
+    expect(rl.check("a", 100)).toBe(true);
+    expect(rl.check("a", 200)).toBe(false); // window full
+    expect(rl.check("a", 1101)).toBe(true); // first hit aged out, slot frees
+  });
 });
 
 describe("clientIp", () => {

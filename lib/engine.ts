@@ -16,6 +16,24 @@ export type AnswerValue = 0 | 1 | 2 | 3 | 4; // 0 = worst, 4 = best
 
 export type ScoreUrgency = "critical" | "needs-work" | "good" | "excellent";
 
+/**
+ * Canonical 0–100 score-band boundaries, shared by every consumer that colors,
+ * labels, or buckets a score: getScoreLabel (here), getScoreColor
+ * (StageScoreCard), scoreBand (recommendations), and the results legend strings
+ * (i18n). A score < critical is the worst band; >= good is the best.
+ *
+ * These MUST be the single source of truth — the results legend in lib/i18n.ts
+ * advertises these exact numbers to users, so any divergence is a visible bug.
+ */
+export const SCORE_BAND_BOUNDS = {
+  /** below this → "Critical" (red) */
+  critical: 30,
+  /** below this → "Needs Work" (yellow) */
+  needsWork: 55,
+  /** below this → "Good" (green); at/above → "Excellent" (emerald) */
+  good: 75,
+} as const;
+
 /** One scored axis of a diagnostic (an AARRR "stage", a PLG "pillar", …). */
 export interface DimensionConfig {
   key: string; // stable id, e.g. "acquisition"
@@ -216,19 +234,19 @@ export function getScoreLabel(score: number): {
   description: string;
   urgency: ScoreUrgency;
 } {
-  if (score < 30)
+  if (score < SCORE_BAND_BOUNDS.critical)
     return {
       label: "Critical",
       description: "Your growth engine has serious structural gaps.",
       urgency: "critical",
     };
-  if (score < 55)
+  if (score < SCORE_BAND_BOUNDS.needsWork)
     return {
       label: "Needs Work",
       description: "Foundation exists but multiple stages are underperforming.",
       urgency: "needs-work",
     };
-  if (score < 75)
+  if (score < SCORE_BAND_BOUNDS.good)
     return {
       label: "Good",
       description: "You're growing but there's clear upside in your bottlenecks.",

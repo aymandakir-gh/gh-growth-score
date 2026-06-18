@@ -9,6 +9,7 @@ import {
   type LangCode,
   type Locale,
 } from "../i18n";
+import { SCORE_BAND_BOUNDS, getScoreLabel } from "../engine";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // These tests validate the REAL i18n API in lib/i18n.ts:
@@ -195,5 +196,52 @@ describe("translations", () => {
 
   it("translations count matches LANGUAGES count (no orphaned entries)", () => {
     expect(Object.keys(translations)).toHaveLength(LANGUAGES.length);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// results.legend.* — the numeric ranges shown to users MUST match the canonical
+// score-band boundaries (SCORE_BAND_BOUNDS / getScoreColor / getScoreLabel).
+// Regression guard for the bug where the legend advertised <40 / 40-69 / 70-84 /
+// 85+ while the dots were actually colored at 30 / 55 / 75 — so a 60-point stage
+// showed a "Good" green dot while the legend claimed green meant 70-84.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("results legend numeric ranges match the real score bands", () => {
+  // Derive the four advertised ranges directly from the single source of truth,
+  // so this test can never silently agree with a wrong legend string.
+  const { critical, needsWork, good } = SCORE_BAND_BOUNDS;
+  const expectedRanges = {
+    critical: `(<${critical})`,
+    needsWork: `(${critical}-${needsWork - 1})`,
+    good: `(${needsWork}-${good - 1})`,
+    excellent: `(${good}+)`,
+  };
+
+  it("English legend strings advertise the canonical boundaries", () => {
+    expect(translations.en["results.legend.critical"]).toBe(`Critical ${expectedRanges.critical}`);
+    expect(translations.en["results.legend.needsWork"]).toBe(`Needs work ${expectedRanges.needsWork}`);
+    expect(translations.en["results.legend.good"]).toBe(`Good ${expectedRanges.good}`);
+    expect(translations.en["results.legend.excellent"]).toBe(`Excellent ${expectedRanges.excellent}`);
+  });
+
+  it("every locale's legend strings contain the canonical numeric ranges", () => {
+    for (const code of ALL_CODES) {
+      expect(translations[code]["results.legend.critical"]).toContain(expectedRanges.critical);
+      expect(translations[code]["results.legend.needsWork"]).toContain(expectedRanges.needsWork);
+      expect(translations[code]["results.legend.good"]).toContain(expectedRanges.good);
+      expect(translations[code]["results.legend.excellent"]).toContain(expectedRanges.excellent);
+    }
+  });
+
+  it("legend band boundaries agree with getScoreLabel at representative scores", () => {
+    // One score just inside each band; the urgency a score maps to must line up
+    // with the band the legend would place it in.
+    expect(getScoreLabel(critical - 1).urgency).toBe("critical"); // 29 → red / "(<30)"
+    expect(getScoreLabel(critical).urgency).toBe("needs-work"); //   30 → yellow / "(30-54)"
+    expect(getScoreLabel(needsWork - 1).urgency).toBe("needs-work"); // 54
+    expect(getScoreLabel(needsWork).urgency).toBe("good"); //          55 → green / "(55-74)"
+    expect(getScoreLabel(good - 1).urgency).toBe("good"); //           74
+    expect(getScoreLabel(good).urgency).toBe("excellent"); //         75 → emerald / "(75+)"
   });
 });

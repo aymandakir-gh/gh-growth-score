@@ -1,6 +1,6 @@
 "use client";
 
-import { type DimensionResult } from "@/lib/engine";
+import { SCORE_BAND_BOUNDS, type DimensionResult } from "@/lib/engine";
 
 const colorMap: Record<string, { bar: string; badge: string; text: string; bg: string }> = {
   blue:   { bar: "bg-blue-500",   badge: "bg-blue-500/20 text-blue-300",   text: "text-blue-400",   bg: "border-blue-500/30" },
@@ -18,9 +18,9 @@ interface StageScoreCardProps {
 }
 
 function getScoreColor(score: number): string {
-  if (score < 30) return "text-red-400";
-  if (score < 55) return "text-yellow-400";
-  if (score < 75) return "text-green-400";
+  if (score < SCORE_BAND_BOUNDS.critical) return "text-red-400";
+  if (score < SCORE_BAND_BOUNDS.needsWork) return "text-yellow-400";
+  if (score < SCORE_BAND_BOUNDS.good) return "text-green-400";
   return "text-emerald-400";
 }
 

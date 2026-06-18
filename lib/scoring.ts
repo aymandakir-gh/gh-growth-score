@@ -658,6 +658,29 @@ export function encodeResultForURL(result: ScoringResult): string {
 }
 
 /**
+ * Validate a legacy base64-JSON token's answers object. Every value must be an
+ * integer 0–4 (the AnswerValue invariant that parseAnswerDigits enforces for the
+ * v1/v2 formats); unknown keys are dropped and any out-of-range value rejects the
+ * whole token. Without this, a crafted token such as `{"a":{"acq_channels":99}}`
+ * decoded to answers:99 and produced absurd scores (e.g. 2475/100) on the public
+ * OG image, the page <title>, and shared dashboards.
+ */
+function sanitizeLegacyAnswers(raw: unknown): Record<string, AnswerValue> | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const src = raw as Record<string, unknown>;
+  const answers: Record<string, AnswerValue> = {};
+  for (const q of AARRR_DIAGNOSTIC.questions) {
+    const v = src[q.id];
+    if (v === undefined) continue; // tolerate a partial answer set
+    if (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > 4) {
+      return null; // out-of-range / non-integer answer → reject the token
+    }
+    answers[q.id] = v as AnswerValue;
+  }
+  return answers;
+}
+
+/**
  * Decode an AARRR share token back into answers + recomputed overall score.
  * Returns null for malformed tokens. Legacy base64-JSON tokens (pre-1.1) still
  * decode for backward compatibility.
@@ -684,27 +707,20 @@ export function decodeResultFromURL(token: string): {
   // Edge runtime, and Node 16+ — so we avoid Buffer entirely (keeps scoring.ts
   // importable from the Edge OG route).
   try {
-    const decoded = atob(token);
-    const parsed = JSON.parse(decoded);
-    // `typeof null === "object"` and arrays are objects too — reject both so a
-    // crafted `{"a":null}` token can't decode to `answers:null` and crash
-    // scoreDiagnostic downstream (OG/embed/share render paths).
-    if (
-      !parsed ||
-      typeof parsed !== "object" ||
-      parsed.a === null ||
-      typeof parsed.a !== "object" ||
-      Array.isArray(parsed.a)
-    ) {
-      return null;
-    }
+    const parsed: unknown = JSON.parse(atob(token));
+    if (!parsed || typeof parsed !== "object") return null;
+    const obj = parsed as Record<string, unknown>;
+    // Validate the answer VALUES, not just the shape: a crafted `{"a":null}`
+    // token must not decode to answers:null, and `{"a":{"id":99}}` must not
+    // decode to an out-of-range answer. Recompute the score from the validated
+    // answers — never trust the token's own `s` field (it is attacker-supplied
+    // and was previously echoed straight into the rendered score).
+    const answers = sanitizeLegacyAnswers(obj.a);
+    if (!answers) return null;
     return {
-      answers: parsed.a as Record<string, AnswerValue>,
-      overallScore:
-        typeof parsed.s === "number"
-          ? parsed.s
-          : overallFromAnswers(parsed.a as Record<string, AnswerValue>),
-      completedAt: typeof parsed.t === "string" ? parsed.t : "",
+      answers,
+      overallScore: overallFromAnswers(answers),
+      completedAt: typeof obj.t === "string" ? obj.t : "",
     };
   } catch {
     return null;

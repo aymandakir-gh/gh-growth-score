@@ -66,6 +66,29 @@ describe("buildShareModel — AARRR", () => {
     expect(buildShareModel(btoa('{"a":null,"s":42}')).valid).toBe(false);
   });
 
+  it("rejects a legacy token whose answers are out of the 0–4 range (security)", () => {
+    // Crafted base64 tokens previously bypassed answer validation and rendered
+    // absurd scores (e.g. 2475/100) in the public OG image and shared dashboard.
+    const single = btoa(JSON.stringify({ a: { acq_channels: 50 } }));
+    expect(buildShareModel(single).valid).toBe(false);
+    expect(buildShareModel(single).overallScore).toBe(0); // generic fallback model
+
+    const allBig = btoa(
+      JSON.stringify({ a: Object.fromEntries(QUESTIONS.map((q) => [q.id, 99])), s: 999 }),
+    );
+    expect(buildShareModel(allBig).valid).toBe(false);
+  });
+
+  it("still decodes a well-formed legacy base64 token (0–4 answers)", () => {
+    const token = btoa(
+      JSON.stringify({ a: Object.fromEntries(QUESTIONS.map((q) => [q.id, 4])) }),
+    );
+    const model = buildShareModel(token);
+    expect(model.valid).toBe(true);
+    expect(model.overallScore).toBeGreaterThanOrEqual(0);
+    expect(model.overallScore).toBeLessThanOrEqual(100);
+  });
+
   it("marks benchmark data as an estimate", () => {
     expect(buildShareModel(tokenFor(3)).isEstimate).toBe(true);
   });

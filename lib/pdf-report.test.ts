@@ -11,11 +11,19 @@ function allAnswers(d: Diagnostic, value: AnswerValue) {
 
 const PDF_MAGIC = "%PDF-";
 
+// Read the leading bytes as a string without spreading the typed array.
+// `String.fromCharCode(...bytes.slice(0, 5))` trips TS2802 under TypeScript
+// 5.7+ (Uint8Array became generic); Array.from with a map callback avoids the
+// iteration requirement.
+function magic(bytes: Uint8Array, len = 5): string {
+  return Array.from(bytes.slice(0, len), (b) => String.fromCharCode(b)).join("");
+}
+
 describe.each(listDiagnostics())("buildReportPdf — $id", (diagnostic) => {
   it("produces a valid, non-trivial PDF for a weak result", () => {
     const result = scoreDiagnostic(diagnostic, allAnswers(diagnostic, 0));
     const bytes = new Uint8Array(buildReportPdf(diagnostic, result));
-    const head = String.fromCharCode(...bytes.slice(0, 5));
+    const head = magic(bytes);
     expect(head).toBe(PDF_MAGIC);
     expect(bytes.byteLength).toBeGreaterThan(2000);
   });
@@ -23,7 +31,7 @@ describe.each(listDiagnostics())("buildReportPdf — $id", (diagnostic) => {
   it("produces a valid PDF for a strong result (no bottleneck playbook edge)", () => {
     const result = scoreDiagnostic(diagnostic, allAnswers(diagnostic, 4));
     const bytes = new Uint8Array(buildReportPdf(diagnostic, result));
-    expect(String.fromCharCode(...bytes.slice(0, 5))).toBe(PDF_MAGIC);
+    expect(magic(bytes)).toBe(PDF_MAGIC);
     expect(bytes.byteLength).toBeGreaterThan(2000);
   });
 
@@ -34,6 +42,6 @@ describe.each(listDiagnostics())("buildReportPdf — $id", (diagnostic) => {
     });
     const result = scoreDiagnostic(diagnostic, answers);
     const bytes = new Uint8Array(buildReportPdf(diagnostic, result));
-    expect(String.fromCharCode(...bytes.slice(0, 5))).toBe(PDF_MAGIC);
+    expect(magic(bytes)).toBe(PDF_MAGIC);
   });
 });

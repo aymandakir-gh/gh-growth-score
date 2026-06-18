@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { Stage } from "./scoring";
-import type { Diagnostic } from "./engine";
+import { SCORE_BAND_BOUNDS, type Diagnostic } from "./engine";
 
 export type ScoreBand = "critical" | "needs-work" | "good" | "strong";
 
@@ -21,9 +21,9 @@ export interface StageRecommendation {
 
 /** Map a 0–100 score to a band (same thresholds as getScoreLabel). */
 export function scoreBand(score: number): ScoreBand {
-  if (score < 30) return "critical";
-  if (score < 55) return "needs-work";
-  if (score < 75) return "good";
+  if (score < SCORE_BAND_BOUNDS.critical) return "critical";
+  if (score < SCORE_BAND_BOUNDS.needsWork) return "needs-work";
+  if (score < SCORE_BAND_BOUNDS.good) return "good";
   return "strong";
 }
 
